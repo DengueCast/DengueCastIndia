@@ -1,0 +1,5970 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>DengueCast — India Dengue Risk Map</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+      background: #f8fafc;
+      color: #111827;
+    }
+
+    /* =========================================================
+       HEADER
+    ========================================================= */
+
+    header {
+      background: linear-gradient(
+        135deg,
+        #0f172a,
+        #172554
+      );
+
+      color: white;
+      padding: 18px 20px;
+      position: relative;
+      z-index: 1000;
+
+      box-shadow:
+        0 4px 20px rgba(15, 23, 42, 0.18);
+    }
+
+    .header-inner {
+      max-width: 1400px;
+      margin: auto;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 15px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 13px;
+
+      background: linear-gradient(
+        135deg,
+        #ef4444,
+        #dc2626
+      );
+
+      font-size: 23px;
+
+      box-shadow:
+        0 5px 15px rgba(239, 68, 68, 0.3);
+    }
+
+    .brand h1 {
+      font-size: 21px;
+      font-weight: 800;
+    }
+
+    .brand p {
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-top: 2px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+
+      background: rgba(255,255,255,0.08);
+      padding: 8px 12px;
+      border-radius: 20px;
+
+      font-size: 12px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    /* =========================================================
+       MAIN
+    ========================================================= */
+
+    main {
+      max-width: 1400px;
+      margin: auto;
+      padding: 18px;
+    }
+
+    /* =========================================================
+       SEARCH
+    ========================================================= */
+
+    .search-section {
+      background: white;
+      border-radius: 18px;
+      padding: 14px;
+
+      box-shadow:
+        0 4px 20px rgba(15, 23, 42, 0.06);
+
+      margin-bottom: 15px;
+    }
+
+    .search-wrapper {
+      position: relative;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+
+      font-size: 17px;
+      color: #64748b;
+    }
+
+    #searchInput {
+      width: 100%;
+
+      padding: 14px 45px 14px 45px;
+
+      border: 1px solid #e2e8f0;
+      border-radius: 13px;
+
+      font-size: 14px;
+      outline: none;
+
+      transition: 0.2s;
+    }
+
+    #searchInput:focus {
+      border-color: #2563eb;
+
+      box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    #clearSearch {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+
+      transform: translateY(-50%);
+
+      border: none;
+      background: #f1f5f9;
+
+      width: 30px;
+      height: 30px;
+
+      border-radius: 50%;
+
+      cursor: pointer;
+    }
+
+    .search-results {
+      margin-top: 8px;
+      display: none;
+
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .search-result {
+      padding: 12px;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .search-result:hover {
+      background: #f8fafc;
+    }
+
+    .search-result-name {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .search-result-type {
+      color: #64748b;
+      font-size: 11px;
+    }
+
+    /* =========================================================
+       BREADCRUMB
+    ========================================================= */
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      margin-bottom: 15px;
+
+      font-size: 13px;
+      color: #64748b;
+
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .breadcrumb button {
+      border: none;
+      background: transparent;
+
+      color: #2563eb;
+      font-weight: 700;
+
+      cursor: pointer;
+    }
+
+    /* =========================================================
+       CONTROLS
+    ========================================================= */
+
+    .controls-card {
+      background: white;
+      border-radius: 18px;
+
+      padding: 14px;
+
+      margin-bottom: 15px;
+
+      box-shadow:
+        0 4px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    .control-title {
+      font-size: 12px;
+      font-weight: 800;
+
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+
+      color: #64748b;
+
+      margin-bottom: 9px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 8px;
+
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .control-btn {
+      border: 1px solid #e2e8f0;
+
+      background: #f8fafc;
+
+      padding: 9px 14px;
+
+      border-radius: 10px;
+
+      font-size: 12px;
+      font-weight: 700;
+
+      cursor: pointer;
+
+      white-space: nowrap;
+
+      transition: 0.2s;
+    }
+
+    .control-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .control-btn.active {
+      background: #172554;
+      color: white;
+      border-color: #172554;
+    }
+
+    .risk-btn[data-risk="Low"].active {
+      background: #16a34a;
+      border-color: #16a34a;
+    }
+
+    .risk-btn[data-risk="Moderate"].active {
+      background: #f59e0b;
+      border-color: #f59e0b;
+    }
+
+    .risk-btn[data-risk="High"].active {
+      background: #dc2626;
+      border-color: #dc2626;
+    }
+
+    .risk-btn[data-risk="Critical"].active {
+      background: #7f1d1d;
+      border-color: #7f1d1d;
+    }
+
+    /* =========================================================
+       STATS
+    ========================================================= */
+
+    .stats {
+      display: grid;
+
+      grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+      gap: 12px;
+
+      margin-bottom: 15px;
+    }
+
+    .stat-card {
+      background: white;
+
+      border-radius: 16px;
+
+      padding: 15px;
+
+      box-shadow:
+        0 4px 20px rgba(15, 23, 42, 0.05);
+    }
+
+    .stat-label {
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 700;
+
+      margin-bottom: 7px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .stat-sub {
+      margin-top: 3px;
+      font-size: 10px;
+      color: #94a3b8;
+    }
+
+    /* =========================================================
+       MAP
+    ========================================================= */
+
+    .map-card {
+      background: white;
+
+      border-radius: 20px;
+
+      overflow: hidden;
+
+      box-shadow:
+        0 5px 25px rgba(15, 23, 42, 0.08);
+
+      position: relative;
+    }
+
+    #map {
+      width: 100%;
+      height: 650px;
+    }
+
+    /* =========================================================
+       MAP TOOLBAR
+    ========================================================= */
+
+    .map-toolbar {
+      position: absolute;
+
+      top: 15px;
+      left: 15px;
+
+      z-index: 800;
+
+      background: white;
+
+      padding: 9px;
+
+      border-radius: 12px;
+
+      box-shadow:
+        0 5px 20px rgba(0,0,0,0.15);
+
+      display: flex;
+      gap: 7px;
+    }
+
+    .toolbar-btn {
+      border: none;
+      background: #f1f5f9;
+
+      padding: 8px 11px;
+
+      border-radius: 9px;
+
+      cursor: pointer;
+
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .toolbar-btn:hover {
+      background: #e2e8f0;
+    }
+
+    /* =========================================================
+       INFO PANEL
+    ========================================================= */
+
+    .info-panel {
+      position: absolute;
+
+      z-index: 900;
+
+      right: 15px;
+      bottom: 15px;
+
+      width: 310px;
+
+      max-width: calc(100% - 30px);
+
+      background: rgba(255,255,255,0.97);
+
+      border-radius: 18px;
+
+      padding: 17px;
+
+      box-shadow:
+        0 8px 30px rgba(15, 23, 42, 0.18);
+
+      display: none;
+    }
+
+    .info-panel.show {
+      display: block;
+    }
+
+    .info-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+
+      gap: 10px;
+
+      margin-bottom: 13px;
+    }
+
+    .info-title {
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .info-location-type {
+      color: #64748b;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .close-btn {
+      border: none;
+      background: #f1f5f9;
+
+      width: 30px;
+      height: 30px;
+
+      border-radius: 50%;
+
+      cursor: pointer;
+    }
+
+    .risk-badge {
+      display: inline-block;
+
+      color: white;
+
+      padding: 6px 10px;
+
+      border-radius: 8px;
+
+      font-size: 11px;
+      font-weight: 900;
+
+      margin-bottom: 13px;
+    }
+
+    .info-grid {
+      display: grid;
+
+      grid-template-columns: 1fr 1fr;
+
+      gap: 9px;
+    }
+
+    .info-item {
+      background: #f8fafc;
+
+      padding: 10px;
+
+      border-radius: 10px;
+    }
+
+    .info-item span {
+      display: block;
+
+      font-size: 10px;
+      color: #64748b;
+
+      margin-bottom: 4px;
+    }
+
+    .info-item strong {
+      font-size: 14px;
+    }
+
+    .hotspot-badge {
+      margin-top: 12px;
+
+      background: #fff7ed;
+      color: #c2410c;
+
+      border: 1px solid #fed7aa;
+
+      border-radius: 10px;
+
+      padding: 9px;
+
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    /* =========================================================
+       LEGEND
+    ========================================================= */
+
+    .legend {
+      background: rgba(255,255,255,0.95);
+
+      padding: 12px;
+
+      border-radius: 12px;
+
+      box-shadow:
+        0 4px 15px rgba(0,0,0,0.12);
+
+      font-size: 11px;
+    }
+
+    .legend-title {
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+
+      margin: 5px 0;
+    }
+
+    .legend-color {
+      width: 15px;
+      height: 15px;
+
+      display: inline-block;
+
+      border-radius: 4px;
+    }
+    /* Keep legend below the existing top-left toolbar */
+.leaflet-top.leaflet-left .legend {
+  margin-top: 75px;
+  margin-left: 15px;
+}
+
+@media (max-width: 800px) {
+  .leaflet-top.leaflet-left .legend {
+    margin-top: 82px;
+    margin-left: 10px;
+  }
+}
+
+    /* =========================================================
+       NEW CASE BUTTON
+    ========================================================= */
+
+    .new-case-button {
+      position: fixed;
+
+      right: 22px;
+      bottom: 22px;
+
+      z-index: 1500;
+
+      border: none;
+
+      background:
+        linear-gradient(
+          135deg,
+          #dc2626,
+          #991b1b
+        );
+
+      color: white;
+
+      padding: 14px 19px;
+
+      border-radius: 50px;
+
+      font-size: 13px;
+      font-weight: 900;
+
+      cursor: pointer;
+
+      box-shadow:
+        0 8px 25px rgba(220, 38, 38, 0.35);
+
+      transition: 0.2s;
+    }
+
+    .new-case-button:hover {
+      transform: translateY(-2px);
+    }
+
+    /* =========================================================
+       MODAL
+    ========================================================= */
+
+    .modal {
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 3000;
+
+      background: rgba(15,23,42,0.55);
+
+      display: none;
+
+      align-items: center;
+      justify-content: center;
+
+      padding: 15px;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 550px;
+
+      max-height: 92vh;
+
+      overflow-y: auto;
+
+      background: white;
+
+      border-radius: 22px;
+
+      padding: 20px;
+
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.25);
+    }
+
+    .modal-header {
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      margin-bottom: 18px;
+    }
+
+    .modal-header h2 {
+      font-size: 20px;
+    }
+
+    .modal-header p {
+      color: #64748b;
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    .modal-close {
+      border: none;
+
+      background: #f1f5f9;
+
+      width: 34px;
+      height: 34px;
+
+      border-radius: 50%;
+
+      cursor: pointer;
+    }
+
+    .form-grid {
+      display: grid;
+
+      grid-template-columns: 1fr 1fr;
+
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 11px;
+      font-weight: 800;
+      color: #475569;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+
+      padding: 11px;
+
+      border: 1px solid #e2e8f0;
+
+      border-radius: 10px;
+
+      outline: none;
+
+      font-size: 13px;
+
+      background: white;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: #2563eb;
+
+      box-shadow:
+        0 0 0 3px rgba(37,99,235,0.08);
+    }
+
+    .location-row {
+      display: grid;
+
+      grid-template-columns: 1fr 1fr;
+
+      gap: 10px;
+    }
+
+    .location-help {
+      font-size: 10px;
+      color: #94a3b8;
+    }
+
+    .form-submit {
+      width: 100%;
+
+      border: none;
+
+      background:
+        linear-gradient(
+          135deg,
+          #dc2626,
+          #991b1b
+        );
+
+      color: white;
+
+      padding: 13px;
+
+      border-radius: 11px;
+
+      margin-top: 15px;
+
+      font-weight: 900;
+
+      cursor: pointer;
+    }
+
+    .form-submit:hover {
+      opacity: 0.92;
+    }
+
+    /* =========================================================
+       LOADING
+    ========================================================= */
+
+    .loading {
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 5000;
+
+      background: #f8fafc;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      flex-direction: column;
+
+      gap: 12px;
+    }
+
+    .loader {
+      width: 42px;
+      height: 42px;
+
+      border: 4px solid #e2e8f0;
+
+      border-top-color: #dc2626;
+
+      border-radius: 50%;
+
+      animation:
+        spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: #64748b;
+    }
+
+    /* =========================================================
+       ERROR
+    ========================================================= */
+
+    #errorBox {
+      display: none;
+
+      background: #fee2e2;
+
+      border: 1px solid #fecaca;
+
+      color: #991b1b;
+
+      padding: 15px;
+
+      border-radius: 12px;
+
+      margin-bottom: 15px;
+
+      font-size: 12px;
+
+      font-weight: 700;
+    }
+
+    /* =========================================================
+   NEARBY CRITICAL ZONE ALERT
+========================================================= */
+
+.nearby-alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 6000;
+
+  width: 350px;
+  max-width: calc(100% - 30px);
+
+  display: none;
+  align-items: flex-start;
+  gap: 12px;
+
+  padding: 16px;
+
+  background: #fff;
+  border: 1px solid #fecaca;
+  border-left: 5px solid #dc2626;
+  border-radius: 14px;
+
+  box-shadow: 0 10px 35px rgba(0,0,0,0.2);
+}
+
+.nearby-alert.show {
+  display: flex;
+  animation: alertSlideIn 0.35s ease;
+}
+
+.nearby-alert-icon {
+  font-size: 25px;
+}
+
+.nearby-alert-content {
+  flex: 1;
+}
+
+.nearby-alert-content strong {
+  display: block;
+  color: #991b1b;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.nearby-alert-content p {
+  color: #374151;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.nearby-alert-content small {
+  display: block;
+  color: #64748b;
+  font-size: 10px;
+  margin-top: 7px;
+}
+
+.nearby-alert > button {
+  border: none;
+  background: #fee2e2;
+  color: #991b1b;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+@keyframes alertSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 550px) {
+  .nearby-alert {
+    top: 10px;
+    right: 10px;
+    width: calc(100% - 20px);
+  }
+}
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media (max-width: 800px) {
+
+      main {
+        padding: 10px;
+      }
+
+      header {
+        padding: 13px;
+      }
+
+      .brand h1 {
+        font-size: 17px;
+      }
+
+      .status {
+        display: none;
+      }
+
+      .stats {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      #map {
+        height: 72vh;
+        min-height: 500px;
+      }
+
+      .info-panel {
+        width: 280px;
+      }
+
+      .map-toolbar {
+        max-width: calc(100% - 30px);
+
+        overflow-x: auto;
+      }
+    }
+
+    @media (max-width: 550px) {
+
+      .stats {
+        gap: 8px;
+      }
+
+      .stat-card {
+        padding: 12px;
+      }
+
+      .stat-value {
+        font-size: 20px;
+      }
+
+      #map {
+        height: 68vh;
+        min-height: 450px;
+      }
+
+      .info-panel {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+
+        width: auto;
+      }
+
+      .new-case-button {
+        right: 15px;
+        bottom: 15px;
+
+        padding: 13px 16px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-group.full {
+        grid-column: auto;
+      }
+    }
+  
+
+/* =========================================================
+   DENGUECAST PROFILE, NOTIFICATIONS & BOTTOM NAV
+========================================================= */
+.header-actions{display:flex;align-items:center;gap:9px}
+.header-icon-btn{position:relative;width:40px;height:40px;border:1px solid rgba(255,255,255,.16);border-radius:12px;background:rgba(255,255,255,.09);color:#fff;font-size:18px;cursor:pointer}
+.header-icon-btn:hover{background:rgba(255,255,255,.17)}
+.notification-count{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:20px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;display:none;align-items:center;justify-content:center;border:2px solid #172554}
+.profile-modal-card{max-width:470px}
+.profile-intro{color:#64748b;font-size:12px;line-height:1.5;margin:7px 0 16px}
+.profile-status-line{font-size:11px;color:#64748b;margin-top:7px;line-height:1.5}
+.share-location-row{display:flex;gap:10px;align-items:flex-start;background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:12px}
+.share-location-row input{width:17px;height:17px;margin-top:2px;accent-color:#2563eb}
+.share-location-row label{font-size:12px;font-weight:700;color:#334155;line-height:1.5}
+.profile-save{width:100%;border:0;border-radius:11px;padding:13px;background:#172554;color:#fff;font-weight:900;cursor:pointer;margin-top:14px}
+.profile-save:disabled{opacity:.6;cursor:wait}
+.notification-panel{position:fixed;z-index:7000;top:78px;right:18px;width:350px;max-width:calc(100vw - 24px);max-height:65vh;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 15px 45px rgba(15,23,42,.22);padding:15px;display:none}
+.notification-panel.show{display:block}
+.notification-panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.notification-panel-head strong{font-size:15px}
+.notification-panel-head button{border:0;background:#f1f5f9;border-radius:8px;padding:6px 9px;cursor:pointer}
+.notification-item{padding:11px 0;border-top:1px solid #f1f5f9;font-size:12px;color:#334155;line-height:1.5}
+.notification-item small{display:block;color:#94a3b8;margin-top:4px;font-size:10px}
+.notification-empty{font-size:12px;color:#64748b;padding:15px 0}
+.user-nearby-alert{position:fixed;top:88px;right:20px;z-index:6500;width:350px;max-width:calc(100% - 30px);display:none;align-items:flex-start;gap:12px;padding:15px;background:#fff;border:1px solid #fecaca;border-left:5px solid #dc2626;border-radius:14px;box-shadow:0 10px 35px rgba(0,0,0,.2)}
+.user-nearby-alert.show{display:flex;animation:alertSlideIn .35s ease}
+.user-nearby-alert strong{display:block;color:#991b1b;font-size:13px;margin-bottom:5px}
+.user-nearby-alert p{font-size:12px;line-height:1.5;color:#374151}
+.user-nearby-alert button{border:0;background:#fee2e2;color:#991b1b;width:25px;height:25px;border-radius:50%;cursor:pointer}
+.user-positive-marker{width:19px;height:19px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 0 0 4px rgba(220,38,38,.22),0 2px 8px rgba(0,0,0,.35)}
+.user-map-legend{position:absolute;z-index:850;left:15px;bottom:15px;background:#fff;border-radius:10px;padding:9px 11px;box-shadow:0 3px 12px rgba(0,0,0,.15);font-size:11px;color:#334155}
+.user-map-legend span{display:inline-block;width:10px;height:10px;background:#dc2626;border-radius:50%;margin-right:6px}
+.bottom-nav{position:fixed;z-index:2500;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:4px;width:min(480px,calc(100% - 22px));padding:7px;background:rgba(15,23,42,.96);border:1px solid rgba(255,255,255,.1);border-radius:18px;box-shadow:0 10px 35px rgba(15,23,42,.28);backdrop-filter:blur(12px)}
+.bottom-nav button{flex:1;min-width:0;border:0;background:transparent;color:#cbd5e1;border-radius:12px;padding:8px 3px;font-size:10px;font-weight:800;cursor:pointer}
+.bottom-nav button span{display:block;font-size:17px;margin-bottom:3px}
+.bottom-nav button.active{background:#fff;color:#172554}
+body{padding-bottom:82px}
+.new-case-button{bottom:92px}
+@media(max-width:800px){.header-actions{gap:6px}.header-icon-btn{width:36px;height:36px}.user-nearby-alert{top:62px;right:10px;width:calc(100% - 20px)}.notification-panel{top:60px;right:10px}}
+@media(max-width:550px){.brand p{max-width:190px}.bottom-nav{bottom:7px}.new-case-button{bottom:83px;right:12px;padding:11px 14px;font-size:11px}.user-map-legend{bottom:12px;left:10px}}
+
+</style>
+</head>
+
+<body>
+
+<!-- =========================================================
+     HEADER
+========================================================= -->
+
+<header>
+
+  <div class="header-inner">
+
+    <div class="brand">
+
+      <div class="brand-icon">
+        🦟
+      </div>
+
+      <div>
+        <h1>DengueCast</h1>
+        <p>India Dengue Risk & Geographic Surveillance</p>
+      </div>
+
+    </div>
+
+    <div class="status">
+      <span class="status-dot"></span>
+      Map System Online
+    </div>
+
+    <div class="header-actions">
+      <button class="header-icon-btn" type="button" onclick="dcToggleNotifications()" aria-label="Notifications" title="Notifications">
+        🔔<span id="dcNotificationCount" class="notification-count">0</span>
+      </button>
+      <button class="header-icon-btn" type="button" onclick="dcOpenProfile()" aria-label="Open profile" title="Profile">👤</button>
+    </div>
+
+  </div>
+
+</header>
+
+
+<!-- =========================================================
+     LOADING
+========================================================= -->
+
+<div id="loading" class="loading">
+
+  <div class="loader"></div>
+
+  <div class="loading-text">
+    Loading DengueCast India Risk Map...
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     MAIN
+========================================================= -->
+
+<main>
+
+  <div id="errorBox"></div>
+
+
+  <!-- SEARCH -->
+
+  <section class="search-section">
+
+    <div class="search-wrapper">
+
+      <span class="search-icon">
+        🔍
+      </span>
+
+      <input
+        id="searchInput"
+        type="text"
+        placeholder="Search state, district or hotspot..."
+        autocomplete="off"
+      />
+
+      <button id="clearSearch">
+        ✕
+      </button>
+
+    </div>
+
+    <div id="searchResults" class="search-results"></div>
+
+  </section>
+
+
+  <!-- BREADCRUMB -->
+
+  <div class="breadcrumb" id="breadcrumb">
+
+    <button onclick="goToIndia()">
+      🇮🇳 India
+    </button>
+
+    <span id="stateCrumb"></span>
+
+    <span id="districtCrumb"></span>
+
+  </div>
+
+
+  <!-- CONTROLS -->
+
+  <section class="controls-card">
+
+    <div class="control-title">
+      Map Layer
+    </div>
+
+    <div class="button-row">
+
+      <button
+        class="control-btn active"
+        id="riskBtn"
+        onclick="setMode('risk')"
+      >
+        🛡 Risk
+      </button>
+
+      <button
+        class="control-btn"
+        id="casesBtn"
+        onclick="setMode('cases')"
+      >
+        📊 Cases
+      </button>
+
+      <button
+        class="control-btn"
+        id="deathsBtn"
+        onclick="setMode('deaths')"
+      >
+        ⚰ Deaths
+      </button>
+
+      <button
+        class="control-btn"
+        id="hotspotBtn"
+        onclick="setMode('hotspot')"
+      >
+        🔥 Hotspots
+      </button>
+
+    </div>
+
+    <br />
+
+    <div class="control-title">
+      Risk Filter
+    </div>
+
+    <div class="button-row">
+
+      <button
+        class="control-btn risk-btn active"
+        data-risk="All"
+        onclick="setRiskFilter('All')"
+      >
+        All
+      </button>
+
+      <button
+        class="control-btn risk-btn"
+        data-risk="Low"
+        onclick="setRiskFilter('Low')"
+      >
+        🟢 Low
+      </button>
+
+      <button
+        class="control-btn risk-btn"
+        data-risk="Moderate"
+        onclick="setRiskFilter('Moderate')"
+      >
+        🟠 Moderate
+      </button>
+
+      <button
+        class="control-btn risk-btn"
+        data-risk="High"
+        onclick="setRiskFilter('High')"
+      >
+        🔴 High
+      </button>
+
+      <button
+        class="control-btn risk-btn"
+        data-risk="Critical"
+        onclick="setRiskFilter('Critical')"
+      >
+        🔥 Critical
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- STATISTICS -->
+
+  <section class="stats">
+
+    <div class="stat-card">
+
+      <div class="stat-label">
+        STATES
+      </div>
+
+      <div
+        class="stat-value"
+        id="stateCount"
+      >
+        —
+      </div>
+
+      <div class="stat-sub">
+        Dengue data regions
+      </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+      <div class="stat-label">
+        DISTRICTS
+      </div>
+
+      <div
+        class="stat-value"
+        id="districtCount"
+      >
+        —
+      </div>
+
+      <div class="stat-sub">
+        Dengue-reporting districts
+      </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+      <div class="stat-label">
+        TOTAL CASES
+      </div>
+
+      <div
+        class="stat-value"
+        id="totalCases"
+      >
+        —
+      </div>
+
+      <div class="stat-sub">
+        Historical mapped cases
+      </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+      <div class="stat-label">
+        CRITICAL STATES
+      </div>
+
+      <div
+        class="stat-value"
+        id="criticalCount"
+      >
+        —
+      </div>
+
+      <div class="stat-sub">
+        Risk score ≥ 76
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- MAP -->
+
+  <section class="map-card">
+
+    <div id="map"></div>
+
+
+    <div class="map-toolbar">
+
+      <button
+        class="toolbar-btn"
+        onclick="goToIndia()"
+      >
+        🇮🇳 India
+      </button>
+
+      <button
+        class="toolbar-btn"
+        onclick="resetMapView()"
+      >
+        ⟳ Reset
+      </button>
+
+      <button
+        class="toolbar-btn"
+        onclick="toggleHotspots()"
+      >
+        🔥 Hotspots
+      </button>
+      <button
+  class="toolbar-btn"
+  onclick="startNearbyAlerts()"
+>
+  📍 Nearby Alerts
+</button>
+
+    </div>
+
+
+    <!-- INFO -->
+
+    <div
+      id="infoPanel"
+      class="info-panel"
+    >
+
+      <div class="info-header">
+
+        <div>
+
+          <div
+            id="infoTitle"
+            class="info-title"
+          >
+            Region
+          </div>
+
+          <div
+            id="infoLocationType"
+            class="info-location-type"
+          >
+            State
+          </div>
+
+        </div>
+
+        <button
+          class="close-btn"
+          onclick="closeInfo()"
+        >
+          ✕
+        </button>
+
+      </div>
+
+
+      <div
+        id="infoRisk"
+        class="risk-badge"
+      >
+        No Data
+      </div>
+
+
+      <div class="info-grid">
+
+        <div class="info-item">
+
+          <span>
+            Cases
+          </span>
+
+          <strong id="infoCases">
+            0
+          </strong>
+
+        </div>
+
+
+        <div class="info-item">
+
+          <span>
+            Deaths
+          </span>
+
+          <strong id="infoDeaths">
+            0
+          </strong>
+
+        </div>
+
+
+        <div class="info-item">
+
+          <span>
+            Risk Score
+          </span>
+
+          <strong id="infoScore">
+            0
+          </strong>
+
+        </div>
+
+
+        <div class="info-item">
+
+          <span>
+            Risk Level
+          </span>
+
+          <strong id="infoLevel">
+            No Data
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <div
+        id="hotspotInfo"
+        class="hotspot-badge"
+        style="display:none"
+      >
+        🔥 Hotspot
+      </div>
+
+    </div>
+
+  </section>
+  <!-- NEARBY CRITICAL ZONE NOTIFICATION -->
+<div id="nearbyAlert" class="nearby-alert">
+  <div class="nearby-alert-icon">⚠️</div>
+  <div class="nearby-alert-content">
+    <strong>Critical Dengue Zone Nearby!</strong>
+    <p id="nearbyAlertMessage"></p>
+    <small>Based on the district data available in DengueCast.</small>
+  </div>
+  <button onclick="dismissNearbyAlert()" aria-label="Close alert">✕</button>
+</div>
+
+</main>
+
+
+<!-- =========================================================
+     NEW CASE BUTTON
+========================================================= -->
+
+<button
+  class="new-case-button"
+  onclick="openCaseModal()"
+>
+  ➕ Report New Case
+</button>
+
+<nav class="bottom-nav" aria-label="Main navigation">
+  <button id="dcNavMap" class="active" type="button" onclick="dcNav('map')"><span>🗺️</span>Map</button>
+  <button id="dcNavAlerts" type="button" onclick="dcNav('alerts')"><span>🔔</span>Alerts</button>
+  <button id="dcNavReport" type="button" onclick="dcNav('report')"><span>➕</span>Report</button>
+  <button id="dcNavProfile" type="button" onclick="dcNav('profile')"><span>👤</span>Profile</button>
+</nav>
+
+<div id="dcNotificationPanel" class="notification-panel" aria-live="polite">
+  <div class="notification-panel-head">
+    <strong>Notifications</strong>
+    <button type="button" onclick="dcCloseNotifications()">Close</button>
+  </div>
+  <div id="dcNotificationList"><div class="notification-empty">No notifications yet.</div></div>
+</div>
+
+<div id="dcUserNearbyAlert" class="user-nearby-alert">
+  <div style="font-size:23px">⚠️</div>
+  <div style="flex:1">
+    <strong>Self-reported positive user nearby</strong>
+    <p id="dcUserNearbyMessage">A self-reported positive user may be nearby.</p>
+  </div>
+  <button type="button" onclick="dcDismissUserAlert()" aria-label="Dismiss">✕</button>
+</div>
+
+<div id="dcProfileModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="dcProfileTitle">
+  <div class="modal-card profile-modal-card">
+    <div class="modal-header">
+      <div>
+        <h2 id="dcProfileTitle">👤 Your Profile</h2>
+        <p>Manage your DengueCast prototype profile</p>
+      </div>
+      <button class="modal-close" type="button" onclick="dcCloseProfile()">✕</button>
+    </div>
+    <p class="profile-intro">Your dengue status is self-reported and is not medically verified. Your name is kept on this device and is not shown on the map.</p>
+    <div class="form-group">
+      <label for="dcDisplayName">Display name (saved on this device)</label>
+      <input id="dcDisplayName" type="text" maxlength="40" placeholder="Enter your name">
+    </div>
+    <div class="form-group" style="margin-top:13px">
+      <label for="dcDengueStatus">Your dengue status</label>
+      <select id="dcDengueStatus">
+        <option value="unknown">Unknown</option>
+        <option value="negative">Negative (self-reported)</option>
+        <option value="positive">Positive (self-reported)</option>
+      </select>
+    </div>
+    <div class="share-location-row" style="margin-top:14px">
+      <input id="dcShareLocation" type="checkbox">
+      <label for="dcShareLocation">I agree to share my approximate location with authenticated DengueCast prototype users so the nearby-alert feature can work. I can turn this off anytime.</label>
+    </div>
+    <div id="dcProfileStatus" class="profile-status-line">Location sharing is off. Your location will not be published.</div>
+    <button id="dcSaveProfile" class="profile-save" type="button" onclick="dcSaveProfile()">Save Profile</button>
+  </div>
+</div>
+
+
+
+<!-- =========================================================
+     NEW CASE MODAL
+========================================================= -->
+
+<div
+  id="caseModal"
+  class="modal"
+>
+
+  <div class="modal-card">
+
+    <div class="modal-header">
+
+      <div>
+
+        <h2>
+          ➕ Report New Dengue Case
+        </h2>
+
+        <p>
+          Submit a new case report for map surveillance.
+        </p>
+
+      </div>
+
+      <button
+        class="modal-close"
+        onclick="closeCaseModal()"
+      >
+        ✕
+      </button>
+
+    </div>
+
+
+    <form id="caseForm">
+
+      <div class="form-grid">
+
+
+        <!-- STATE -->
+
+        <div class="form-group">
+
+          <label>
+            State *
+          </label>
+
+          <select
+            id="caseState"
+            required
+          >
+
+            <option value="">
+              Select state
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <!-- DISTRICT -->
+
+        <div class="form-group">
+
+          <label>
+            District *
+          </label>
+
+          <select
+            id="caseDistrict"
+            required
+          >
+
+            <option value="">
+              Select district
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <!-- DATE -->
+
+        <div class="form-group">
+
+          <label>
+            Case Date *
+          </label>
+
+          <input
+            id="caseDate"
+            type="date"
+            required
+          />
+
+        </div>
+
+
+        <!-- CASES -->
+
+        <div class="form-group">
+
+          <label>
+            Number of Cases *
+          </label>
+
+          <input
+            id="caseCases"
+            type="number"
+            min="1"
+            value="1"
+            required
+          />
+
+        </div>
+
+
+        <!-- DEATHS -->
+
+        <div class="form-group">
+
+          <label>
+            Deaths
+          </label>
+
+          <input
+            id="caseDeaths"
+            type="number"
+            min="0"
+            value="0"
+          />
+
+        </div>
+
+
+        <!-- SOURCE -->
+
+        <div class="form-group">
+
+          <label>
+            Source / Report Type *
+          </label>
+
+          <select
+            id="caseSource"
+            required
+          >
+
+            <option value="">
+              Select source
+            </option>
+
+            <option>
+              Government Health Department
+            </option>
+
+            <option>
+              Hospital Report
+            </option>
+
+            <option>
+              Laboratory Report
+            </option>
+
+            <option>
+              Field Surveillance
+            </option>
+
+            <option>
+              Other
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <!-- LOCATION -->
+
+        <div class="form-group full">
+
+          <label>
+            Optional Location
+          </label>
+
+          <div class="location-row">
+
+            <input
+              id="caseLat"
+              type="number"
+              step="any"
+              placeholder="Latitude"
+            />
+
+            <input
+              id="caseLng"
+              type="number"
+              step="any"
+              placeholder="Longitude"
+            />
+
+          </div>
+
+          <div class="location-help">
+            Optional GPS coordinates for the reported case.
+          </div>
+
+        </div>
+
+
+        <!-- NOTES -->
+
+        <div class="form-group full">
+
+          <label>
+            Notes
+          </label>
+
+          <textarea
+            id="caseNotes"
+            rows="3"
+            placeholder="Optional report details..."
+          ></textarea>
+
+        </div>
+
+      </div>
+
+
+      <button
+        class="form-submit"
+        type="submit"
+      >
+        Submit Case Report
+      </button>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+></script>
+
+<!-- Firebase compat SDK: keeps the existing non-module app scripts working -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCp8EFXQb61u6WV7kZQuGnb9OApcsJFXI",
+    authDomain: "denguecast-e7bb8.firebaseapp.com",
+    projectId: "denguecast-e7bb8",
+    storageBucket: "denguecast-e7bb8.firebasestorage.app",
+    messagingSenderId: "1056094020902",
+    appId: "1:1056094020902:web:2464e81204d76a92b84de7"
+  };
+
+  let dcAuth = null;
+  let dcDb = null;
+  let dcCurrentUser = null;
+  let dcFirebaseReady = Promise.resolve(false);
+
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    dcAuth = firebase.auth();
+    dcDb = firebase.firestore();
+
+    dcFirebaseReady = new Promise((resolve) => {
+      const unsubscribe = dcAuth.onAuthStateChanged(async (user) => {
+        if (user) {
+          dcCurrentUser = user;
+          unsubscribe();
+          resolve(true);
+        } else {
+          try {
+            await dcAuth.signInAnonymously();
+          } catch (error) {
+            console.error("DengueCast anonymous sign-in failed:", error);
+            unsubscribe();
+            resolve(false);
+          }
+        }
+      });
+    });
+  } catch (error) {
+    console.error("Firebase initialization failed:", error);
+    dcFirebaseReady = Promise.resolve(false);
+  }
+</script>
+
+
+
+<script>
+
+  /* =========================================================
+     CONFIGURATION
+  ========================================================= */
+
+  const GEOJSON_FILE =
+    "india_districts.geojson";
+
+  const STATE_CSV_FILE =
+    "data/state_map_data.csv";
+
+  const DISTRICT_CSV_FILE =
+    "data/district_map_data.csv";
+
+
+  /* =========================================================
+     GLOBAL DATA
+  ========================================================= */
+
+  let stateData = {};
+
+  let districtData = {};
+
+  let districtRows = [];
+
+  let geoJsonData = null;
+
+  let geoLayer = null;
+
+  let hotspotLayer = null;
+
+  let currentMode = "risk";
+
+  let currentRiskFilter = "All";
+
+  let currentState = null;
+
+  let currentDistrict = null;
+
+  let originalIndiaBounds = null;
+
+
+  /* =========================================================
+     MAP
+  ========================================================= */
+
+  const map =
+    L.map("map", {
+
+      zoomControl: true,
+
+      minZoom: 4,
+
+      maxZoom: 12
+
+    });
+
+
+  L.tileLayer(
+
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+
+    {
+
+      attribution:
+        "&copy; OpenStreetMap contributors",
+
+      maxZoom: 19
+
+    }
+
+  ).addTo(map);
+
+
+  /* =========================================================
+     NORMALIZE STATE
+  ========================================================= */
+
+  function normalizeStateName(name) {
+
+    if (!name) {
+      return "";
+    }
+
+    const value =
+      String(name)
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, " ");
+
+    const aliases = {
+
+      "ORISSA":
+        "ODISHA",
+
+      "ODISHA":
+        "ODISHA",
+
+      "UTTARANCHAL":
+        "UTTARAKHAND",
+
+      "PONDICHERRY":
+        "PUDUCHERRY",
+
+      "ANDAMAN & NICOBAR":
+        "ANDAMAN AND NICOBAR ISLANDS",
+
+      "ANDAMAN AND NICOBAR":
+        "ANDAMAN AND NICOBAR ISLANDS",
+
+      "DADRA AND NAGAR HAVELI":
+        "DADRA AND NAGAR HAVELI AND DAMAN AND DIU",
+
+      "DAMAN AND DIU":
+        "DADRA AND NAGAR HAVELI AND DAMAN AND DIU",
+
+      "DADRA & NAGAR HAVELI":
+        "DADRA AND NAGAR HAVELI AND DAMAN AND DIU"
+
+    };
+
+    return aliases[value] || value;
+  }
+
+
+  /* =========================================================
+     NORMALIZE DISTRICT
+  ========================================================= */
+
+  function normalizeDistrictName(name) {
+
+    if (!name) {
+      return "";
+    }
+
+    return String(name)
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, " ")
+      .replace(/[.'’`]/g, "")
+      .replace(/&/g, "AND");
+
+  }
+
+
+  /* =========================================================
+     DISTRICT KEY
+  ========================================================= */
+
+  function districtKey(state, district) {
+
+    return (
+
+      normalizeStateName(state) +
+      "||" +
+      normalizeDistrictName(district)
+
+    );
+
+  }
+
+
+  /* =========================================================
+     CSV PARSER
+  ========================================================= */
+
+  function parseCSV(text) {
+
+    const lines =
+      text
+        .trim()
+        .split(/\r?\n/);
+
+    if (lines.length < 2) {
+
+      throw new Error(
+        "CSV file is empty or invalid."
+      );
+
+    }
+
+    const headers =
+      parseCSVLine(lines[0]);
+
+    const rows = [];
+
+    for (
+      let i = 1;
+      i < lines.length;
+      i++
+    ) {
+
+      if (!lines[i].trim()) {
+        continue;
+      }
+
+      const values =
+        parseCSVLine(lines[i]);
+
+      const row = {};
+
+      headers.forEach(
+        (header, index) => {
+
+          row[header.trim()] =
+            values[index] !== undefined
+              ? values[index].trim()
+              : "";
+
+        }
+      );
+
+      rows.push(row);
+
+    }
+
+    return rows;
+
+  }
+
+
+  function parseCSVLine(line) {
+
+    const result = [];
+
+    let current = "";
+
+    let insideQuotes = false;
+
+    for (
+      let i = 0;
+      i < line.length;
+      i++
+    ) {
+
+      const char = line[i];
+
+      if (char === '"') {
+
+        if (
+          insideQuotes &&
+          line[i + 1] === '"'
+        ) {
+
+          current += '"';
+
+          i++;
+
+        }
+
+        else {
+
+          insideQuotes =
+            !insideQuotes;
+
+        }
+
+      }
+
+      else if (
+        char === "," &&
+        !insideQuotes
+      ) {
+
+        result.push(current);
+
+        current = "";
+
+      }
+
+      else {
+
+        current += char;
+
+      }
+
+    }
+
+    result.push(current);
+
+    return result;
+
+  }
+
+
+  /* =========================================================
+     NUMBER
+  ========================================================= */
+
+  function toNumber(value) {
+
+    if (
+      value === null ||
+      value === undefined ||
+      value === ""
+    ) {
+
+      return 0;
+
+    }
+
+    const number =
+      Number(
+        String(value)
+          .replace(/,/g, "")
+          .trim()
+      );
+
+    return Number.isFinite(number)
+      ? number
+      : 0;
+
+  }
+
+
+  /* =========================================================
+     LOAD STATE DATA
+  ========================================================= */
+
+  async function loadStateData() {
+
+    const response =
+      await fetch(
+        STATE_CSV_FILE
+      );
+
+    if (!response.ok) {
+
+      throw new Error(
+        `Unable to load ${STATE_CSV_FILE}`
+      );
+
+    }
+
+    const text =
+      await response.text();
+
+    const rows =
+      parseCSV(text);
+
+    stateData = {};
+
+    rows.forEach(row => {
+
+      const state =
+        normalizeStateName(
+          row.State
+        );
+
+      if (!state) {
+        return;
+      }
+
+      stateData[state] = {
+
+        State:
+          row.State,
+
+        Total_Cases:
+          toNumber(
+            row.Total_Cases
+          ),
+
+        Total_Deaths:
+          toNumber(
+            row.Total_Deaths
+          ),
+
+        Historical_Cases:
+          toNumber(
+            row.Historical_Cases
+          ),
+
+        Risk_Score:
+          toNumber(
+            row.Risk_Score
+          ),
+
+        Risk_Level:
+          row.Risk_Level ||
+          "Low"
+
+      };
+
+    });
+
+    console.log(
+      "State data loaded:",
+      Object.keys(stateData).length
+    );
+
+  }
+
+
+  /* =========================================================
+     LOAD DISTRICT DATA
+  ========================================================= */
+
+  async function loadDistrictData() {
+
+    const response =
+      await fetch(
+        DISTRICT_CSV_FILE
+      );
+
+    if (!response.ok) {
+
+      throw new Error(
+        `Unable to load ${DISTRICT_CSV_FILE}`
+      );
+
+    }
+
+    const text =
+      await response.text();
+
+    districtRows =
+      parseCSV(text);
+
+    districtData = {};
+
+    districtRows.forEach(row => {
+
+      const state =
+        normalizeStateName(
+          row.State
+        );
+
+      const district =
+        normalizeDistrictName(
+          row.District
+        );
+
+      if (!state || !district) {
+        return;
+      }
+
+      districtData[
+        districtKey(
+          state,
+          district
+        )
+      ] = {
+
+        State:
+          row.State,
+
+        District:
+          row.District,
+
+        Total_Cases:
+          toNumber(
+            row.Total_Cases
+          ),
+
+        Total_Deaths:
+          toNumber(
+            row.Total_Deaths
+          ),
+
+        Latitude:
+          toNumber(
+            row.Latitude
+          ),
+
+        Longitude:
+          toNumber(
+            row.Longitude
+          ),
+
+        Risk_Score:
+          toNumber(
+            row.Risk_Score
+          ),
+
+        Risk_Level:
+          row.Risk_Level ||
+          "Low",
+
+        Hotspot_ID:
+          row.Hotspot_ID || "",
+
+        Hotspot_Status:
+          row.Hotspot_Status || ""
+
+      };
+
+    });
+
+    console.log(
+      "District rows:",
+      districtRows.length
+    );
+
+    console.log(
+      "District data:",
+      Object.keys(districtData).length
+    );
+
+  }
+
+
+  /* =========================================================
+     LOAD GEOJSON
+  ========================================================= */
+
+  async function loadGeoJSON() {
+
+    const response =
+      await fetch(
+        GEOJSON_FILE
+      );
+
+    if (!response.ok) {
+
+      throw new Error(
+        `Unable to load ${GEOJSON_FILE}`
+      );
+
+    }
+
+    geoJsonData =
+      await response.json();
+
+    console.log(
+      "GeoJSON features:",
+      geoJsonData.features.length
+    );
+
+  }
+
+
+  /* =========================================================
+     GEOJSON STATE
+  ========================================================= */
+
+  function getGeoJSONState(feature) {
+
+    const properties =
+      feature.properties || {};
+
+    return normalizeStateName(
+
+      properties.st_nm ||
+
+      properties.STATE ||
+
+      properties.state ||
+
+      properties.NAME_1 ||
+
+      properties.name
+
+    );
+
+  }
+
+
+  /* =========================================================
+     GEOJSON DISTRICT
+  ========================================================= */
+
+  function getGeoJSONDistrict(feature) {
+
+    const properties =
+      feature.properties || {};
+
+    return normalizeDistrictName(
+
+      properties.district ||
+
+      properties.DISTRICT ||
+
+      properties.District ||
+
+      properties.dt_name ||
+
+      properties.NAME_2 ||
+
+      properties.name_2
+
+    );
+
+  }
+
+
+  /* =========================================================
+     GET DISTRICT DATA
+  ========================================================= */
+
+  function getDistrictData(feature) {
+
+    const state =
+      getGeoJSONState(feature);
+
+    const district =
+      getGeoJSONDistrict(feature);
+
+    return districtData[
+      districtKey(
+        state,
+        district
+      )
+    ];
+
+  }
+
+
+  /* =========================================================
+     RISK COLOR
+  ========================================================= */
+
+  function riskColor(level) {
+
+    switch (
+      String(level)
+        .toUpperCase()
+        .trim()
+    ) {
+
+      case "CRITICAL":
+        return "#7f1d1d";
+
+      case "HIGH":
+        return "#dc2626";
+
+      case "MODERATE":
+        return "#f59e0b";
+
+      case "LOW":
+        return "#22c55e";
+
+      default:
+        return "#cbd5e1";
+
+    }
+
+  }
+
+
+  /* =========================================================
+     CASE COLOR
+  ========================================================= */
+
+  function casesColor(cases) {
+
+    if (cases >= 10000)
+      return "#7f1d1d";
+
+    if (cases >= 5000)
+      return "#dc2626";
+
+    if (cases >= 1000)
+      return "#f97316";
+
+    if (cases >= 100)
+      return "#f59e0b";
+
+    if (cases > 0)
+      return "#22c55e";
+
+    return "#cbd5e1";
+
+  }
+
+
+  /* =========================================================
+     DEATH COLOR
+  ========================================================= */
+
+  function deathsColor(deaths) {
+
+    if (deaths >= 20)
+      return "#7f1d1d";
+
+    if (deaths >= 10)
+      return "#dc2626";
+
+    if (deaths >= 5)
+      return "#f97316";
+
+    if (deaths >= 1)
+      return "#f59e0b";
+
+    return "#cbd5e1";
+
+  }
+
+
+  /* =========================================================
+     GET FILTER RISK
+  ========================================================= */
+
+  function getFeatureRisk(feature) {
+
+    const district =
+      getDistrictData(feature);
+
+    if (district) {
+      return district.Risk_Level;
+    }
+
+    const state =
+      getGeoJSONState(feature);
+
+    return stateData[state]
+      ? stateData[state].Risk_Level
+      : "No Data";
+
+  }
+
+
+  /* =========================================================
+     GET STYLE
+  ========================================================= */
+
+  function getFeatureStyle(feature) {
+
+    const state =
+      getGeoJSONState(feature);
+
+    const district =
+      getDistrictData(feature);
+
+    const stateInfo =
+      stateData[state];
+
+    let fillColor =
+      "#e5e7eb";
+
+    let opacity =
+      0.45;
+
+    let weight =
+      0.7;
+
+
+    /* -------------------------------------------------------
+       DISTRICT DATA AVAILABLE
+    ------------------------------------------------------- */
+
+    if (district) {
+
+      const risk =
+        district.Risk_Level;
+
+      if (
+        currentRiskFilter !== "All" &&
+        String(risk).toUpperCase() !==
+        currentRiskFilter.toUpperCase()
+      ) {
+
+        return {
+
+          fillColor:
+            "#e5e7eb",
+
+          color:
+            "#d1d5db",
+
+          weight:
+            0.5,
+
+          fillOpacity:
+            0.12
+
+        };
+
+      }
+
+
+      if (
+        currentMode === "cases"
+      ) {
+
+        fillColor =
+          casesColor(
+            district.Total_Cases
+          );
+
+      }
+
+      else if (
+        currentMode === "deaths"
+      ) {
+
+        fillColor =
+          deathsColor(
+            district.Total_Deaths
+          );
+
+      }
+
+      else if (
+        currentMode === "hotspot"
+      ) {
+
+        fillColor =
+          district.Hotspot_Status
+            ? "#f97316"
+            : "#e5e7eb";
+
+      }
+
+      else {
+
+        fillColor =
+          riskColor(
+            district.Risk_Level
+          );
+
+      }
+
+      opacity =
+        0.78;
+
+      weight =
+        0.8;
+
+    }
+
+
+    /* -------------------------------------------------------
+       FALLBACK TO STATE
+    ------------------------------------------------------- */
+
+    else if (stateInfo) {
+
+      if (
+        currentRiskFilter !== "All" &&
+        String(
+          stateInfo.Risk_Level
+        ).toUpperCase() !==
+        currentRiskFilter.toUpperCase()
+      ) {
+
+        return {
+
+          fillColor:
+            "#e5e7eb",
+
+          color:
+            "#d1d5db",
+
+          weight:
+            0.5,
+
+          fillOpacity:
+            0.12
+
+        };
+
+      }
+
+
+      if (
+        currentMode === "cases"
+      ) {
+
+        fillColor =
+          casesColor(
+            stateInfo.Total_Cases
+          );
+
+      }
+
+      else if (
+        currentMode === "deaths"
+      ) {
+
+        fillColor =
+          deathsColor(
+            stateInfo.Total_Deaths
+          );
+
+      }
+
+      else {
+
+        fillColor =
+          riskColor(
+            stateInfo.Risk_Level
+          );
+
+      }
+
+      opacity =
+        0.65;
+
+    }
+
+
+    return {
+
+      fillColor,
+
+      color:
+        "#ffffff",
+
+      weight,
+
+      fillOpacity:
+        opacity
+
+    };
+
+  }
+
+
+  /* =========================================================
+     HIGHLIGHT
+  ========================================================= */
+
+  function highlightFeature(event) {
+
+    const layer =
+      event.target;
+
+    layer.setStyle({
+
+      weight: 2,
+
+      color:
+        "#111827",
+
+      fillOpacity:
+        0.9
+
+    });
+
+    layer.bringToFront();
+
+
+    const feature =
+      layer.feature;
+
+    const state =
+      getGeoJSONState(feature);
+
+    const district =
+      getDistrictData(feature);
+
+
+    if (district) {
+
+      layer.bindTooltip(
+
+        `<strong>
+          ${district.District}
+        </strong>
+        <br>
+        ${district.State}
+        <br>
+        Risk: ${district.Risk_Level}
+        <br>
+        Score: ${district.Risk_Score.toFixed(2)}
+        <br>
+        Cases: ${district.Total_Cases.toLocaleString()}
+        <br>
+        🔥 ${
+          district.Hotspot_Status
+            ? "Hotspot"
+            : "Normal"
+        }`,
+
+        {
+          sticky: true
+        }
+
+      );
+
+    }
+
+    else if (
+      stateData[state]
+    ) {
+
+      const data =
+        stateData[state];
+
+      layer.bindTooltip(
+
+        `<strong>
+          ${data.State}
+        </strong>
+        <br>
+        Risk: ${data.Risk_Level}
+        <br>
+        Score: ${data.Risk_Score.toFixed(2)}
+        <br>
+        Cases: ${data.Total_Cases.toLocaleString()}`,
+
+        {
+          sticky: true
+        }
+
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     RESET HIGHLIGHT
+  ========================================================= */
+
+  function resetHighlight(event) {
+
+    if (geoLayer) {
+
+      geoLayer.resetStyle(
+        event.target
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     CLICK FEATURE
+  ========================================================= */
+
+  function clickFeature(event) {
+
+    const feature =
+      event.target.feature;
+
+    const state =
+      getGeoJSONState(feature);
+
+    const district =
+      getDistrictData(feature);
+
+
+    /* -------------------------------------------------------
+       DISTRICT
+    ------------------------------------------------------- */
+
+    if (district) {
+
+      currentState =
+        state;
+
+      currentDistrict =
+        normalizeDistrictName(
+          district.District
+        );
+
+      showDistrictInfo(
+        district
+      );
+
+      zoomToFeature(
+        event.target
+      );
+
+      updateBreadcrumb();
+
+      return;
+
+    }
+
+
+    /* -------------------------------------------------------
+       STATE
+    ------------------------------------------------------- */
+
+    const data =
+      stateData[state];
+
+    if (data) {
+
+      currentState =
+        state;
+
+      currentDistrict =
+        null;
+
+      showStateInfo(
+        data
+      );
+
+      zoomToFeature(
+        event.target
+      );
+
+      updateBreadcrumb();
+
+      return;
+
+    }
+
+
+    showInfo({
+
+      State:
+        state ||
+        "Unknown Region",
+
+      Risk_Level:
+        "No Data",
+
+      Risk_Score:
+        0,
+
+      Total_Cases:
+        0,
+
+      Total_Deaths:
+        0
+
+    });
+
+  }
+
+
+  /* =========================================================
+     SHOW STATE
+  ========================================================= */
+
+  function showStateInfo(data) {
+
+    const panel =
+      document.getElementById(
+        "infoPanel"
+      );
+
+    document.getElementById(
+      "infoTitle"
+    ).textContent =
+      data.State ||
+      "Unknown State";
+
+    document.getElementById(
+      "infoLocationType"
+    ).textContent =
+      "State";
+
+    setRiskBadge(
+      data.Risk_Level
+    );
+
+    document.getElementById(
+      "infoCases"
+    ).textContent =
+      toNumber(
+        data.Total_Cases
+      ).toLocaleString();
+
+    document.getElementById(
+      "infoDeaths"
+    ).textContent =
+      toNumber(
+        data.Total_Deaths
+      ).toLocaleString();
+
+    document.getElementById(
+      "infoScore"
+    ).textContent =
+      toNumber(
+        data.Risk_Score
+      ).toFixed(2);
+
+    document.getElementById(
+      "infoLevel"
+    ).textContent =
+      data.Risk_Level ||
+      "No Data";
+
+    document.getElementById(
+      "hotspotInfo"
+    ).style.display =
+      "none";
+
+    panel.classList.add(
+      "show"
+    );
+
+  }
+
+
+  /* =========================================================
+     SHOW DISTRICT
+  ========================================================= */
+
+  function showDistrictInfo(data) {
+
+    const panel =
+      document.getElementById(
+        "infoPanel"
+      );
+
+    document.getElementById(
+      "infoTitle"
+    ).textContent =
+      data.District;
+
+    document.getElementById(
+      "infoLocationType"
+    ).textContent =
+      `${data.State} • District`;
+
+    setRiskBadge(
+      data.Risk_Level
+    );
+
+    document.getElementById(
+      "infoCases"
+    ).textContent =
+      toNumber(
+        data.Total_Cases
+      ).toLocaleString();
+
+    document.getElementById(
+      "infoDeaths"
+    ).textContent =
+      toNumber(
+        data.Total_Deaths
+      ).toLocaleString();
+
+    document.getElementById(
+      "infoScore"
+    ).textContent =
+      toNumber(
+        data.Risk_Score
+      ).toFixed(2);
+
+    document.getElementById(
+      "infoLevel"
+    ).textContent =
+      data.Risk_Level ||
+      "No Data";
+
+
+    const hotspot =
+      document.getElementById(
+        "hotspotInfo"
+      );
+
+
+    if (
+      data.Hotspot_Status
+    ) {
+
+      hotspot.style.display =
+        "block";
+
+      hotspot.innerHTML =
+        `🔥 Hotspot detected
+         ${data.Hotspot_ID
+           ? `• Cluster ${data.Hotspot_ID}`
+           : ""}`;
+
+    }
+
+    else {
+
+      hotspot.style.display =
+        "none";
+
+    }
+
+
+    panel.classList.add(
+      "show"
+    );
+
+  }
+
+
+  /* =========================================================
+     RISK BADGE
+  ========================================================= */
+
+  function setRiskBadge(level) {
+
+    const badge =
+      document.getElementById(
+        "infoRisk"
+      );
+
+    badge.textContent =
+      level ||
+      "No Data";
+
+    badge.style.background =
+      riskColor(level);
+
+  }
+
+
+  /* =========================================================
+     GENERIC INFO
+  ========================================================= */
+
+  function showInfo(data) {
+
+    const panel =
+      document.getElementById(
+        "infoPanel"
+      );
+
+    document.getElementById(
+      "infoTitle"
+    ).textContent =
+      data.State ||
+      "Unknown";
+
+    document.getElementById(
+      "infoLocationType"
+    ).textContent =
+      "Region";
+
+    setRiskBadge(
+      data.Risk_Level
+    );
+
+    document.getElementById(
+      "infoCases"
+    ).textContent =
+      toNumber(
+        data.Total_Cases
+      ).toLocaleString();
+
+    document.getElementById(
+      "infoDeaths"
+    ).textContent =
+      toNumber(
+        data.Total_Deaths
+      ).toLocaleString();
+
+    document.getElementById(
+      "infoScore"
+    ).textContent =
+      toNumber(
+        data.Risk_Score
+      ).toFixed(2);
+
+    document.getElementById(
+      "infoLevel"
+    ).textContent =
+      data.Risk_Level ||
+      "No Data";
+
+    panel.classList.add(
+      "show"
+    );
+
+  }
+
+
+  function closeInfo() {
+
+    document
+      .getElementById(
+        "infoPanel"
+      )
+      .classList.remove(
+        "show"
+      );
+
+  }
+
+
+  /* =========================================================
+     ZOOM FEATURE
+  ========================================================= */
+
+  function zoomToFeature(layer) {
+
+    const bounds =
+      layer.getBounds();
+
+    if (
+      bounds &&
+      bounds.isValid()
+    ) {
+
+      map.fitBounds(
+        bounds,
+        {
+          padding:
+            [35, 35],
+          maxZoom:
+            8
+        }
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     FEATURE EVENTS
+  ========================================================= */
+
+  function onEachFeature(
+    feature,
+    layer
+  ) {
+
+    layer.on({
+
+      mouseover:
+        highlightFeature,
+
+      mouseout:
+        resetHighlight,
+
+      click:
+        clickFeature
+
+    });
+
+  }
+
+
+  /* =========================================================
+     CREATE MAP
+  ========================================================= */
+
+  function createMapLayer() {
+
+    if (geoLayer) {
+
+      map.removeLayer(
+        geoLayer
+      );
+
+    }
+
+
+    geoLayer =
+      L.geoJSON(
+
+        geoJsonData,
+
+        {
+
+          style:
+            getFeatureStyle,
+
+          onEachFeature:
+            onEachFeature
+
+        }
+
+      ).addTo(map);
+
+
+    if (
+      !originalIndiaBounds
+    ) {
+
+      originalIndiaBounds =
+        geoLayer.getBounds();
+
+    }
+
+
+    if (
+      geoLayer.getBounds().isValid()
+    ) {
+
+      map.fitBounds(
+        geoLayer.getBounds(),
+        {
+          padding:
+            [20, 20]
+        }
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     MODE
+  ========================================================= */
+
+  function setMode(mode) {
+
+    currentMode =
+      mode;
+
+
+    document
+      .querySelectorAll(
+        ".control-btn"
+      )
+      .forEach(
+        button =>
+          button.classList.remove(
+            "active"
+          )
+      );
+
+
+    const buttonMap = {
+
+      risk:
+        "riskBtn",
+
+      cases:
+        "casesBtn",
+
+      deaths:
+        "deathsBtn",
+
+      hotspot:
+        "hotspotBtn"
+
+    };
+
+
+    document
+      .getElementById(
+        buttonMap[mode]
+      )
+      .classList.add(
+        "active"
+      );
+
+
+    createMapLayer();
+
+
+    if (
+      mode === "hotspot"
+    ) {
+
+      createHotspotLayer();
+
+    }
+
+    else {
+
+      removeHotspotLayer();
+
+    }
+
+  }
+
+
+  /* =========================================================
+     RISK FILTER
+  ========================================================= */
+
+  function setRiskFilter(level) {
+
+    currentRiskFilter =
+      level;
+
+
+    document
+      .querySelectorAll(
+        ".risk-btn"
+      )
+      .forEach(button => {
+
+        button.classList.toggle(
+
+          "active",
+
+          button.dataset.risk ===
+          level
+
+        );
+
+      });
+
+
+    createMapLayer();
+
+
+    if (
+      currentMode === "hotspot"
+    ) {
+
+      createHotspotLayer();
+
+    }
+
+  }
+
+
+  /* =========================================================
+     HOTSPOT LAYER
+  ========================================================= */
+
+  function createHotspotLayer() {
+
+    removeHotspotLayer();
+
+
+    hotspotLayer =
+      L.layerGroup();
+
+
+    districtRows
+      .filter(row => {
+
+        return (
+          row.Hotspot_Status &&
+          row.Latitude &&
+          row.Longitude
+        );
+
+      })
+      .forEach(row => {
+
+        const state =
+          normalizeStateName(
+            row.State
+          );
+
+        const risk =
+          row.Risk_Level ||
+          "Low";
+
+
+        if (
+          currentRiskFilter !==
+          "All" &&
+          risk.toUpperCase() !==
+          currentRiskFilter.toUpperCase()
+        ) {
+
+          return;
+
+        }
+
+
+        const marker =
+          L.circleMarker(
+
+            [
+              toNumber(
+                row.Latitude
+              ),
+
+              toNumber(
+                row.Longitude
+              )
+
+            ],
+
+            {
+
+              radius: 9,
+
+              color: "#c2410c",
+
+              weight: 2,
+
+              fillColor: "#f97316",
+
+              fillOpacity: 0.75
+
+            }
+
+          );
+
+
+        marker.bindPopup(`
+
+          <strong>
+            🔥 ${row.District}
+          </strong>
+
+          <br>
+
+          ${row.State}
+
+          <br>
+
+          Risk:
+          ${risk}
+
+          <br>
+
+          Cases:
+          ${toNumber(
+            row.Total_Cases
+          ).toLocaleString()}
+
+          <br>
+
+          Deaths:
+          ${toNumber(
+            row.Total_Deaths
+          ).toLocaleString()}
+
+          <br>
+
+          ${
+            row.Hotspot_ID
+              ? `Cluster: ${row.Hotspot_ID}`
+              : ""
+          }
+
+        `);
+
+
+        marker.on(
+          "click",
+          () => {
+
+            showDistrictInfo({
+
+              State:
+                row.State,
+
+              District:
+                row.District,
+
+              Total_Cases:
+                toNumber(
+                  row.Total_Cases
+                ),
+
+              Total_Deaths:
+                toNumber(
+                  row.Total_Deaths
+                ),
+
+              Risk_Score:
+                toNumber(
+                  row.Risk_Score
+                ),
+
+              Risk_Level:
+                risk,
+
+              Hotspot_ID:
+                row.Hotspot_ID,
+
+              Hotspot_Status:
+                row.Hotspot_Status
+
+            });
+
+          }
+        );
+
+
+        marker.addTo(
+          hotspotLayer
+        );
+
+      });
+
+
+    hotspotLayer.addTo(
+      map
+    );
+
+  }
+
+
+  function removeHotspotLayer() {
+
+    if (
+      hotspotLayer
+    ) {
+
+      map.removeLayer(
+        hotspotLayer
+      );
+
+      hotspotLayer =
+        null;
+
+    }
+
+  }
+
+
+  function toggleHotspots() {
+
+    if (
+      hotspotLayer
+    ) {
+
+      removeHotspotLayer();
+
+    }
+
+    else {
+
+      createHotspotLayer();
+
+    }
+
+  }
+
+
+  /* =========================================================
+     BREADCRUMB
+  ========================================================= */
+
+  function updateBreadcrumb() {
+
+    const stateCrumb =
+      document.getElementById(
+        "stateCrumb"
+      );
+
+    const districtCrumb =
+      document.getElementById(
+        "districtCrumb"
+      );
+
+
+    stateCrumb.innerHTML =
+      currentState
+        ? `› <button onclick="goToState('${escapeHTML(currentState)}')">
+             ${escapeHTML(
+               stateData[currentState]
+                 ?.State ||
+               currentState
+             )}
+           </button>`
+        : "";
+
+
+    districtCrumb.innerHTML =
+      currentDistrict
+        ? `› <span>
+             ${escapeHTML(
+               currentDistrict
+             )}
+           </span>`
+        : "";
+
+  }
+
+
+  /* =========================================================
+     INDIA
+  ========================================================= */
+
+  function goToIndia() {
+
+    currentState =
+      null;
+
+    currentDistrict =
+      null;
+
+
+    updateBreadcrumb();
+
+
+    closeInfo();
+
+
+    if (
+      originalIndiaBounds &&
+      originalIndiaBounds.isValid()
+    ) {
+
+      map.fitBounds(
+        originalIndiaBounds,
+        {
+          padding:
+            [20, 20]
+        }
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     STATE DRILLDOWN
+  ========================================================= */
+
+  function goToState(state) {
+
+    state =
+      normalizeStateName(
+        state
+      );
+
+
+    currentState =
+      state;
+
+    currentDistrict =
+      null;
+
+
+    const layers = [];
+
+    if (geoLayer) {
+
+      geoLayer.eachLayer(
+        layer => {
+
+          if (
+            getGeoJSONState(
+              layer.feature
+            ) === state
+          ) {
+
+            layers.push(
+              layer
+            );
+
+          }
+
+        }
+      );
+
+    }
+
+
+    if (layers.length) {
+
+      const group =
+        L.featureGroup(
+          layers
+        );
+
+      map.fitBounds(
+        group.getBounds(),
+        {
+          padding:
+            [25, 25]
+        }
+      );
+
+    }
+
+
+    updateBreadcrumb();
+
+  }
+
+
+  /* =========================================================
+     RESET
+  ========================================================= */
+
+  function resetMapView() {
+
+    goToIndia();
+
+    currentRiskFilter =
+      "All";
+
+    document
+      .querySelectorAll(
+        ".risk-btn"
+      )
+      .forEach(
+        button =>
+          button.classList.toggle(
+            "active",
+            button.dataset.risk ===
+            "All"
+          )
+      );
+
+    createMapLayer();
+
+  }
+
+
+  /* =========================================================
+     SEARCH
+  ========================================================= */
+
+  const searchInput =
+    document.getElementById(
+      "searchInput"
+    );
+
+  const searchResults =
+    document.getElementById(
+      "searchResults"
+    );
+
+
+  searchInput.addEventListener(
+    "input",
+    performSearch
+  );
+
+
+  document
+    .getElementById(
+      "clearSearch"
+    )
+    .addEventListener(
+      "click",
+      () => {
+
+        searchInput.value =
+          "";
+
+        searchResults.style.display =
+          "none";
+
+      }
+    );
+
+
+  function performSearch() {
+
+    const query =
+      normalizeSearch(
+        searchInput.value
+      );
+
+
+    if (
+      query.length < 2
+    ) {
+
+      searchResults.style.display =
+        "none";
+
+      return;
+
+    }
+
+
+    const results = [];
+
+
+    /* STATES */
+
+    Object.keys(
+      stateData
+    ).forEach(state => {
+
+      const display =
+        stateData[state].State;
+
+      if (
+        normalizeSearch(
+          display
+        ).includes(query)
+      ) {
+
+        results.push({
+
+          type:
+            "State",
+
+          name:
+            display,
+
+          state
+
+        });
+
+      }
+
+    });
+
+
+    /* DISTRICTS */
+
+    districtRows.forEach(row => {
+
+      if (
+        normalizeSearch(
+          row.District
+        ).includes(query)
+      ) {
+
+        results.push({
+
+          type:
+            row.Hotspot_Status
+              ? "🔥 Hotspot / District"
+              : "District",
+
+          name:
+            row.District,
+
+          state:
+            normalizeStateName(
+              row.State
+            ),
+
+          district:
+            normalizeDistrictName(
+              row.District
+            )
+
+        });
+
+      }
+
+    });
+
+
+    /* HOTSPOTS */
+
+    districtRows.forEach(row => {
+
+      if (
+        row.Hotspot_Status &&
+        (
+          normalizeSearch(
+            row.Hotspot_ID
+          ).includes(query) ||
+          normalizeSearch(
+            "hotspot"
+          ).includes(query)
+        )
+      ) {
+
+        results.push({
+
+          type:
+            "🔥 Hotspot",
+
+          name:
+            row.District,
+
+          state:
+            normalizeStateName(
+              row.State
+            ),
+
+          district:
+            normalizeDistrictName(
+              row.District
+            )
+
+        });
+
+      }
+
+    });
+
+
+    renderSearchResults(
+      results.slice(0, 20)
+    );
+
+  }
+
+
+  function normalizeSearch(value) {
+
+    return String(value || "")
+      .toLowerCase()
+      .trim();
+
+  }
+
+
+  function renderSearchResults(
+    results
+  ) {
+
+    if (
+      !results.length
+    ) {
+
+      searchResults.innerHTML =
+        `<div class="search-result">
+          <div>
+            <div class="search-result-name">
+              No result found
+            </div>
+            <div class="search-result-type">
+              Try another state or district
+            </div>
+          </div>
+        </div>`;
+
+      searchResults.style.display =
+        "block";
+
+      return;
+
+    }
+
+
+    searchResults.innerHTML =
+      results.map(
+        (result, index) => `
+
+          <div
+            class="search-result"
+            onclick="selectSearchResult(${index})"
+          >
+
+            <div>
+
+              <div
+                class="search-result-name"
+              >
+                ${escapeHTML(
+                  result.name
+                )}
+              </div>
+
+              <div
+                class="search-result-type"
+              >
+                ${escapeHTML(
+                  result.type
+                )}
+                ${
+                  result.state
+                    ? ` • ${escapeHTML(
+                        stateData[
+                          result.state
+                        ]?.State ||
+                        result.state
+                      )}`
+                    : ""
+                }
+              </div>
+
+            </div>
+
+          </div>
+
+        `
+      )
+      .join("");
+
+
+    window.currentSearchResults =
+      results;
+
+
+    searchResults.style.display =
+      "block";
+
+  }
+
+
+  function selectSearchResult(
+    index
+  ) {
+
+    const result =
+      window.currentSearchResults[
+        index
+      ];
+
+
+    searchResults.style.display =
+      "none";
+
+    searchInput.value =
+      result.name;
+
+
+    if (
+      result.type ===
+      "State"
+    ) {
+
+      goToState(
+        result.state
+      );
+
+      return;
+
+    }
+
+
+    focusDistrict(
+      result.state,
+      result.district
+    );
+
+  }
+
+
+  /* =========================================================
+     FOCUS DISTRICT
+  ========================================================= */
+
+  function focusDistrict(
+    state,
+    district
+  ) {
+
+    currentState =
+      state;
+
+    currentDistrict =
+      district;
+
+
+    let found =
+      false;
+
+
+    if (geoLayer) {
+
+      geoLayer.eachLayer(
+        layer => {
+
+          const feature =
+            layer.feature;
+
+          const featureState =
+            getGeoJSONState(
+              feature
+            );
+
+          const featureDistrict =
+            getGeoJSONDistrict(
+              feature
+            );
+
+
+          if (
+
+            featureState ===
+            state &&
+
+            featureDistrict ===
+            district
+
+          ) {
+
+            found =
+              true;
+
+            showDistrictInfo(
+              getDistrictData(
+                feature
+              )
+            );
+
+            zoomToFeature(
+              layer
+            );
+
+          }
+
+        }
+      );
+
+    }
+
+
+    if (!found) {
+
+      const data =
+        districtData[
+          districtKey(
+            state,
+            district
+          )
+        ];
+
+
+      if (data) {
+
+        showDistrictInfo(
+          data
+        );
+
+
+        if (
+          data.Latitude &&
+          data.Longitude
+        ) {
+
+          map.setView(
+
+            [
+              data.Latitude,
+              data.Longitude
+            ],
+
+            8
+
+          );
+
+        }
+
+      }
+
+    }
+
+
+    updateBreadcrumb();
+
+  }
+
+
+  /* =========================================================
+     ESCAPE HTML
+  ========================================================= */
+
+  function escapeHTML(value) {
+
+    return String(value || "")
+      .replace(
+        /&/g,
+        "&amp;"
+      )
+      .replace(
+        /</g,
+        "&lt;"
+      )
+      .replace(
+        />/g,
+        "&gt;"
+      )
+      .replace(
+        /"/g,
+        "&quot;"
+      )
+      .replace(
+        /'/g,
+        "&#039;"
+      );
+
+  }
+
+
+  /* =========================================================
+     NEW CASE MODAL
+  ========================================================= */
+
+  function openCaseModal() {
+
+    document
+      .getElementById(
+        "caseModal"
+      )
+      .classList.add(
+        "show"
+      );
+
+
+    populateStateSelect();
+
+  }
+
+
+  function closeCaseModal() {
+
+    document
+      .getElementById(
+        "caseModal"
+      )
+      .classList.remove(
+        "show"
+      );
+
+  }
+
+
+  /* =========================================================
+     POPULATE STATES
+  ========================================================= */
+
+  function populateStateSelect() {
+
+    const select =
+      document.getElementById(
+        "caseState"
+      );
+
+
+    select.innerHTML =
+      `<option value="">
+        Select state
+      </option>`;
+
+
+    Object.keys(
+      stateData
+    )
+      .sort()
+      .forEach(state => {
+
+        const option =
+          document.createElement(
+            "option"
+          );
+
+        option.value =
+          state;
+
+        option.textContent =
+          stateData[state].State;
+
+        select.appendChild(
+          option
+        );
+
+      });
+
+
+    if (
+      currentState
+    ) {
+
+      select.value =
+        currentState;
+
+      populateDistrictSelect(
+        currentState
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     STATE → DISTRICTS
+  ========================================================= */
+
+  document
+    .getElementById(
+      "caseState"
+    )
+    .addEventListener(
+      "change",
+      event => {
+
+        populateDistrictSelect(
+          event.target.value
+        );
+
+      }
+    );
+
+
+  function populateDistrictSelect(
+    state
+  ) {
+
+    const select =
+      document.getElementById(
+        "caseDistrict"
+      );
+
+
+    select.innerHTML =
+      `<option value="">
+        Select district
+      </option>`;
+
+
+    if (!state) {
+      return;
+    }
+
+
+    const districts =
+      districtRows
+        .filter(
+          row =>
+            normalizeStateName(
+              row.State
+            ) === state
+        )
+        .map(
+          row =>
+            row.District
+        )
+        .filter(
+          Boolean
+        );
+
+
+    [
+      ...new Set(
+        districts
+      )
+    ]
+      .sort()
+      .forEach(
+        district => {
+
+          const option =
+            document.createElement(
+              "option"
+            );
+
+          option.value =
+            normalizeDistrictName(
+              district
+            );
+
+          option.textContent =
+            district;
+
+          select.appendChild(
+            option
+          );
+
+        }
+      );
+
+  }
+
+
+  /* =========================================================
+     NEW CASE SUBMIT
+  ========================================================= */
+
+  document
+    .getElementById(
+      "caseForm"
+    )
+    .addEventListener(
+      "submit",
+      handleCaseSubmit
+    );
+
+
+  function handleCaseSubmit(
+    event
+  ) {
+
+    event.preventDefault();
+
+
+    const state =
+      document.getElementById(
+        "caseState"
+      ).value;
+
+
+    const district =
+      document.getElementById(
+        "caseDistrict"
+      ).value;
+
+
+    const date =
+      document.getElementById(
+        "caseDate"
+      ).value;
+
+
+    const cases =
+      toNumber(
+        document.getElementById(
+          "caseCases"
+        ).value
+      );
+
+
+    const deaths =
+      toNumber(
+        document.getElementById(
+          "caseDeaths"
+        ).value
+      );
+
+
+    const latitude =
+      document.getElementById(
+        "caseLat"
+      ).value;
+
+
+    const longitude =
+      document.getElementById(
+        "caseLng"
+      ).value;
+
+
+    const source =
+      document.getElementById(
+        "caseSource"
+      ).value;
+
+
+    const notes =
+      document.getElementById(
+        "caseNotes"
+      ).value;
+
+
+    const report = {
+
+      id:
+        "LOCAL-" +
+        Date.now(),
+
+      state,
+
+      district,
+
+      date,
+
+      cases,
+
+      deaths,
+
+      latitude:
+        latitude
+          ? Number(latitude)
+          : null,
+
+      longitude:
+        longitude
+          ? Number(longitude)
+          : null,
+
+      source,
+
+      notes,
+
+      createdAt:
+        new Date().toISOString()
+
+    };
+
+
+    /* -------------------------------------------------------
+       DEMO STORAGE
+       
+       Production:
+       Replace this localStorage operation with:
+       
+       POST /api/cases
+       
+       ------------------------------------------------------- */
+
+    const existing =
+      JSON.parse(
+        localStorage.getItem(
+          "denguecast_new_cases"
+        ) ||
+        "[]"
+      );
+
+
+    existing.push(
+      report
+    );
+
+
+    localStorage.setItem(
+
+      "denguecast_new_cases",
+
+      JSON.stringify(
+        existing
+      )
+
+    );
+
+
+    alert(
+
+      "New dengue case report saved successfully.\n\n" +
+
+      "State: " +
+      state +
+
+      "\nDistrict: " +
+      district +
+
+      "\nCases: " +
+      cases
+
+    );
+
+
+    document
+      .getElementById(
+        "caseForm"
+      )
+      .reset();
+
+
+    closeCaseModal();
+
+  }
+
+
+  /* =========================================================
+     VALIDATION
+  ========================================================= */
+
+  function validateMapData() {
+
+    console.log(
+      "===================================="
+    );
+
+    console.log(
+      "DENGUECAST MAP VALIDATION"
+    );
+
+    console.log(
+      "===================================="
+    );
+
+
+    const csvStates =
+      Object.keys(
+        stateData
+      );
+
+
+    const geoStates =
+      new Set();
+
+
+    const geoDistricts =
+      new Set();
+
+
+    geoJsonData.features.forEach(
+      feature => {
+
+        const state =
+          getGeoJSONState(
+            feature
+          );
+
+        const district =
+          getGeoJSONDistrict(
+            feature
+          );
+
+
+        if (state) {
+
+          geoStates.add(
+            state
+          );
+
+        }
+
+
+        if (
+          state &&
+          district
+        ) {
+
+          geoDistricts.add(
+
+            districtKey(
+              state,
+              district
+            )
+
+          );
+
+        }
+
+      }
+    );
+
+
+    const matchedStates =
+      csvStates.filter(
+        state =>
+          geoStates.has(
+            state
+          )
+      );
+
+
+    const csvNotMatched =
+      csvStates.filter(
+        state =>
+          !geoStates.has(
+            state
+          )
+      );
+
+
+    console.log(
+      "CSV states:",
+      csvStates.length
+    );
+
+
+    console.log(
+      "GeoJSON features:",
+      geoJsonData.features.length
+    );
+
+
+    console.log(
+      "Unique GeoJSON states:",
+      geoStates.size
+    );
+
+
+    console.log(
+      "GeoJSON district boundaries:",
+      geoDistricts.size
+    );
+
+
+    console.log(
+      "Matched states:",
+      matchedStates.length
+    );
+
+
+    console.log(
+      "CSV states not matched:",
+      csvNotMatched
+    );
+
+
+    console.log(
+      "District CSV rows:",
+      districtRows.length
+    );
+
+
+    console.log(
+      "District data keys:",
+      Object.keys(
+        districtData
+      ).length
+    );
+
+
+    const telangana =
+      geoJsonData.features.filter(
+        feature =>
+          getGeoJSONState(
+            feature
+          ) === "TELANGANA"
+      );
+
+
+    console.log(
+      "Telangana GeoJSON features:",
+      telangana.length
+    );
+
+
+    console.log(
+      "===================================="
+    );
+
+  }
+
+
+  /* =========================================================
+     STATISTICS
+  ========================================================= */
+
+  function updateStatistics() {
+
+    const states =
+      Object.values(
+        stateData
+      );
+
+
+    let totalCases =
+      0;
+
+    let critical =
+      0;
+
+
+    states.forEach(
+      data => {
+
+        totalCases +=
+          data.Total_Cases;
+
+
+        if (
+          String(
+            data.Risk_Level
+          ).toUpperCase() ===
+          "CRITICAL"
+        ) {
+
+          critical++;
+
+        }
+
+      }
+    );
+
+
+    document.getElementById(
+      "stateCount"
+    ).textContent =
+      states.length;
+
+
+    document.getElementById(
+      "districtCount"
+    ).textContent =
+      Object.keys(
+        districtData
+      ).length;
+
+
+    document.getElementById(
+      "totalCases"
+    ).textContent =
+      totalCases.toLocaleString();
+
+
+    document.getElementById(
+      "criticalCount"
+    ).textContent =
+      critical;
+
+  }
+
+
+  /* =========================================================
+     DATE DEFAULT
+  ========================================================= */
+
+  function setDefaultDate() {
+
+    const date =
+      document.getElementById(
+        "caseDate"
+      );
+
+    const today =
+      new Date();
+
+    const yyyy =
+      today.getFullYear();
+
+    const mm =
+      String(
+        today.getMonth() + 1
+      ).padStart(2, "0");
+
+    const dd =
+      String(
+        today.getDate()
+      ).padStart(2, "0");
+
+
+    date.value =
+      `${yyyy}-${mm}-${dd}`;
+
+  }
+
+
+  /* =========================================================
+     ESC MODAL
+  ========================================================= */
+
+  document.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key === "Escape"
+      ) {
+
+        closeCaseModal();
+
+      }
+
+    }
+  );
+
+/* =========================================================
+   NEARBY CRITICAL ZONE ALERT SYSTEM
+========================================================= */
+
+const NEARBY_ALERT_RADIUS_KM = 10;
+
+let userLocationWatchId = null;
+
+let activeCriticalZones = new Set();
+
+let nearbyAlertEnabled = false;
+
+
+/* =========================================================
+   HAVERSINE DISTANCE
+========================================================= */
+
+function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+
+  const earthRadius = 6371;
+
+  const toRadians = degrees =>
+    degrees * Math.PI / 180;
+
+  const dLat =
+    toRadians(lat2 - lat1);
+
+  const dLon =
+    toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+    Math.cos(toRadians(lat2)) *
+    Math.sin(dLon / 2) ** 2;
+
+  const c =
+    2 * Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a)
+    );
+
+  return earthRadius * c;
+}
+
+
+/* =========================================================
+   START LOCATION MONITORING
+========================================================= */
+
+function startNearbyAlerts() {
+
+  if (!navigator.geolocation) {
+
+    alert(
+      "Your browser does not support location services."
+    );
+
+    return;
+  }
+
+  if (userLocationWatchId !== null) {
+
+    alert(
+      "Nearby critical-zone alerts are already active."
+    );
+
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+
+    position => {
+
+      nearbyAlertEnabled = true;
+
+      checkNearbyCriticalZones(
+        position.coords.latitude,
+        position.coords.longitude
+      );
+
+      userLocationWatchId =
+        navigator.geolocation.watchPosition(
+
+          position => {
+
+            checkNearbyCriticalZones(
+              position.coords.latitude,
+              position.coords.longitude
+            );
+
+          },
+
+          error => {
+
+            console.error(
+              "Location monitoring error:",
+              error.message
+            );
+
+            alert(
+              "Unable to monitor your location. Please check your browser location permission."
+            );
+
+            stopNearbyAlerts();
+
+          },
+
+          {
+            enableHighAccuracy: true,
+            maximumAge: 10000,
+            timeout: 20000
+          }
+
+        );
+
+      alert(
+        "Nearby critical-zone monitoring is now active. DengueCast will check for Critical districts within 10 km."
+      );
+
+    },
+
+    error => {
+
+      let message =
+        "Unable to access your location.";
+
+      if (error.code === error.PERMISSION_DENIED) {
+        message =
+          "Location permission was denied. Please allow location access in your browser settings.";
+      }
+
+      else if (error.code === error.POSITION_UNAVAILABLE) {
+        message =
+          "Your current location is unavailable.";
+      }
+
+      else if (error.code === error.TIMEOUT) {
+        message =
+          "Location request timed out. Please try again.";
+      }
+
+      alert(message);
+
+    },
+
+    {
+      enableHighAccuracy: true,
+      maximumAge: 10000,
+      timeout: 20000
+    }
+
+  );
+
+}
+
+
+/* =========================================================
+   CHECK CRITICAL DISTRICTS
+========================================================= */
+
+function checkNearbyCriticalZones(
+  userLat,
+  userLng
+) {
+
+  if (!nearbyAlertEnabled) {
+    return;
+  }
+
+  const nearbyZones = [];
+
+  districtRows.forEach(row => {
+
+    const risk =
+      String(row.Risk_Level || "")
+        .trim()
+        .toUpperCase();
+
+    if (risk !== "CRITICAL") {
+      return;
+    }
+
+    const lat = toNumber(row.Latitude);
+    const lng = toNumber(row.Longitude);
+
+    // Ignore invalid or missing coordinates.
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      lat < -90 ||
+      lat > 90 ||
+      lng < -180 ||
+      lng > 180 ||
+      (lat === 0 && lng === 0)
+    ) {
+      return;
+    }
+
+    const distance =
+      calculateDistanceKm(
+        userLat,
+        userLng,
+        lat,
+        lng
+      );
+
+    if (
+      distance <= NEARBY_ALERT_RADIUS_KM
+    ) {
+
+      nearbyZones.push({
+
+        key: districtKey(
+          row.State,
+          row.District
+        ),
+
+        district: row.District,
+
+        state: row.State,
+
+        distance
+
+      });
+
+    }
+
+  });
+
+
+  const currentZoneKeys =
+    new Set(
+      nearbyZones.map(zone => zone.key)
+    );
+
+
+  // Notify only when entering a new critical zone.
+  const newlyEnteredZones =
+    nearbyZones.filter(
+      zone =>
+        !activeCriticalZones.has(zone.key)
+    );
+
+
+  if (newlyEnteredZones.length) {
+
+    showNearbyCriticalAlert(
+      newlyEnteredZones
+    );
+
+  }
+
+
+  // Update active zones so repeated alerts are avoided.
+  activeCriticalZones =
+    currentZoneKeys;
+
+}
+
+
+/* =========================================================
+   SHOW NOTIFICATION
+========================================================= */
+
+function showNearbyCriticalAlert(zones) {
+
+  const alertBox =
+    document.getElementById(
+      "nearbyAlert"
+    );
+
+  const message =
+    document.getElementById(
+      "nearbyAlertMessage"
+    );
+
+  if (!alertBox || !message) {
+    return;
+  }
+
+  if (zones.length === 1) {
+
+    const zone = zones[0];
+
+    message.textContent =
+      `${zone.district}, ${zone.state} is approximately ${zone.distance.toFixed(1)} km from your location. It is marked Critical in the available dataset.`;
+
+  }
+
+  else {
+
+    message.textContent =
+      zones.map(zone =>
+        `${zone.district}, ${zone.state} (${zone.distance.toFixed(1)} km)`
+      ).join("; ");
+
+  }
+
+  alertBox.classList.add("show");
+
+}
+
+
+/* =========================================================
+   DISMISS ALERT
+========================================================= */
+
+function dismissNearbyAlert() {
+
+  document
+    .getElementById("nearbyAlert")
+    .classList.remove("show");
+
+}
+
+
+/* =========================================================
+   STOP LOCATION MONITORING
+========================================================= */
+
+function stopNearbyAlerts() {
+
+  nearbyAlertEnabled = false;
+
+  activeCriticalZones.clear();
+
+  if (
+    userLocationWatchId !== null &&
+    navigator.geolocation
+  ) {
+
+    navigator.geolocation.clearWatch(
+      userLocationWatchId
+    );
+
+  }
+
+  userLocationWatchId = null;
+
+}
+  /* =========================================================
+     INITIALIZE
+  ========================================================= */
+
+  async function initialize() {
+
+    try {
+
+      console.log(
+        "Starting DengueCast..."
+      );
+
+
+      await Promise.all([
+
+        loadStateData(),
+
+        loadDistrictData(),
+
+        loadGeoJSON()
+
+      ]);
+
+
+      updateStatistics();
+
+
+      validateMapData();
+
+
+      createMapLayer();
+
+
+      createHotspotLayer();
+
+
+      setDefaultDate();
+
+
+      document
+        .getElementById(
+          "loading"
+        )
+        .style.display =
+        "none";
+
+
+      console.log(
+        "DengueCast map loaded successfully."
+      );
+
+    }
+
+    catch(error) {
+
+      console.error(
+        error
+      );
+
+
+      document
+        .getElementById(
+          "loading"
+        )
+        .style.display =
+        "none";
+
+
+      const errorBox =
+        document.getElementById(
+          "errorBox"
+        );
+
+
+      errorBox.style.display =
+        "block";
+
+
+      errorBox.textContent =
+        "Map loading error: " +
+        error.message;
+
+    }
+
+  }
+
+
+  initialize();
+
+</script>
+
+
+<script>
+
+  /* =========================================================
+     LEGEND
+  ========================================================= */
+
+  const legend =
+    L.control({
+      position:
+        "topleft"
+    });
+
+
+  legend.onAdd =
+    function() {
+
+      const div =
+        L.DomUtil.create(
+          "div",
+          "legend"
+        );
+
+
+      div.innerHTML = `
+
+        <div class="legend-title">
+          Dengue Risk
+        </div>
+
+        <div class="legend-row">
+          <span
+            class="legend-color"
+            style="background:#22c55e"
+          ></span>
+          Low
+        </div>
+
+        <div class="legend-row">
+          <span
+            class="legend-color"
+            style="background:#f59e0b"
+          ></span>
+          Moderate
+        </div>
+
+        <div class="legend-row">
+          <span
+            class="legend-color"
+            style="background:#dc2626"
+          ></span>
+          High
+        </div>
+
+        <div class="legend-row">
+          <span
+            class="legend-color"
+            style="background:#7f1d1d"
+          ></span>
+          Critical
+        </div>
+
+        <div class="legend-row">
+          <span
+            class="legend-color"
+            style="background:#f97316"
+          ></span>
+          🔥 Hotspot
+        </div>
+
+        <div class="legend-row">
+          <span
+            class="legend-color"
+            style="background:#e5e7eb"
+          ></span>
+          No Data
+        </div>
+
+      `;
+
+
+      return div;
+
+    };
+
+
+  legend.addTo(map);
+
+</script>
+
+
+<script>
+/* =========================================================
+   DENGUECAST FIRESTORE PRESENCE + PROFILE + NAVIGATION
+   Prototype note: status is self-reported, not verified.
+========================================================= */
+const DC_RADIUS_KM = 10;
+const DC_PRESENCE_TTL_MS = 20 * 60 * 1000;
+const DC_LOCATION_UPDATE_MS = 45000;
+let dcPresenceUnsubscribe = null;
+let dcPresenceLayer = null;
+let dcCachedPresenceRecords = [];
+let dcLocationWatchId = null;
+let dcLastLocationWrite = 0;
+let dcLatestPosition = null;
+let dcProfileStatus = "unknown";
+let dcSharingEnabled = false;
+let dcNearbyPositiveIds = new Set();
+let dcNotificationItems = [];
+
+function dcSetProfileMessage(message, isError = false) {
+  const el = document.getElementById("dcProfileStatus");
+  if (!el) return;
+  el.textContent = message;
+  el.style.color = isError ? "#b91c1c" : "#64748b";
+}
+
+function dcOpenProfile() {
+  document.getElementById("dcProfileModal").classList.add("show");
+  document.getElementById("dcDisplayName").value = localStorage.getItem("denguecast_display_name") || "";
+  document.getElementById("dcDengueStatus").value = dcProfileStatus;
+  document.getElementById("dcShareLocation").checked = dcSharingEnabled;
+  dcSetProfileMessage(dcSharingEnabled
+    ? "Approximate location sharing is enabled. Turn it off here whenever you want."
+    : "Location sharing is off. Your location will not be published.");
+}
+
+function dcCloseProfile() {
+  document.getElementById("dcProfileModal").classList.remove("show");
+}
+
+function dcNav(section) {
+  document.querySelectorAll(".bottom-nav button").forEach(button => button.classList.remove("active"));
+  const active = document.getElementById({
+    map: "dcNavMap", alerts: "dcNavAlerts", report: "dcNavReport", profile: "dcNavProfile"
+  }[section]);
+  if (active) active.classList.add("active");
+
+  if (section === "map") {
+    dcCloseNotifications();
+    document.getElementById("map").scrollIntoView({ behavior: "smooth", block: "center" });
+  } else if (section === "alerts") {
+    dcToggleNotifications();
+  } else if (section === "report") {
+    openCaseModal();
+  } else if (section === "profile") {
+    dcOpenProfile();
+  }
+}
+
+function dcToggleNotifications() {
+  document.getElementById("dcNotificationPanel").classList.toggle("show");
+}
+
+function dcCloseNotifications() {
+  document.getElementById("dcNotificationPanel").classList.remove("show");
+}
+
+function dcAddNotification(title, message) {
+  dcNotificationItems.unshift({
+    title,
+    message,
+    time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  });
+  dcNotificationItems = dcNotificationItems.slice(0, 20);
+
+  const list = document.getElementById("dcNotificationList");
+  list.innerHTML = "";
+  dcNotificationItems.forEach(item => {
+    const row = document.createElement("div");
+    row.className = "notification-item";
+    const strong = document.createElement("strong");
+    strong.textContent = item.title;
+    const body = document.createElement("div");
+    body.textContent = item.message;
+    const time = document.createElement("small");
+    time.textContent = item.time;
+    row.append(strong, body, time);
+    list.appendChild(row);
+  });
+
+  const count = document.getElementById("dcNotificationCount");
+  count.textContent = String(dcNotificationItems.length);
+  count.style.display = "flex";
+}
+
+function dcDismissUserAlert() {
+  document.getElementById("dcUserNearbyAlert").classList.remove("show");
+}
+
+function dcShowUserNearbyAlert(distance) {
+  const message = `A user has self-reported a positive dengue status approximately ${distance.toFixed(1)} km from your approximate location (within ${DC_RADIUS_KM} km). This is not a verified case.`;
+  document.getElementById("dcUserNearbyMessage").textContent = message;
+  document.getElementById("dcUserNearbyAlert").classList.add("show");
+  dcAddNotification("Nearby self-reported positive status", message);
+}
+
+function dcRoundCoordinate(value) {
+  // Approximate location only; do not upload raw GPS coordinates.
+  return Math.round(value * 100) / 100;
+}
+
+function dcValidCoordinates(lat, lng) {
+  return Number.isFinite(lat) && Number.isFinite(lng) &&
+    lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 &&
+    !(lat === 0 && lng === 0);
+}
+
+function dcEnsurePresenceLayer() {
+  if (!dcPresenceLayer && typeof map !== "undefined") {
+    dcPresenceLayer = L.layerGroup().addTo(map);
+  }
+}
+
+function dcRenderPositiveMarkers(records) {
+  dcEnsurePresenceLayer();
+  if (!dcPresenceLayer) return;
+  dcPresenceLayer.clearLayers();
+
+  records.forEach(record => {
+    const lat = Number(record.latitude);
+    const lng = Number(record.longitude);
+    if (!dcValidCoordinates(lat, lng)) return;
+
+    const markerIcon = L.divIcon({
+      className: "",
+      html: '<div class="user-positive-marker"></div>',
+      iconSize: [23, 23],
+      iconAnchor: [11, 11]
+    });
+
+    const marker = L.marker([lat, lng], { icon: markerIcon });
+    marker.bindPopup(
+      "<strong>Self-reported positive status</strong><br>" +
+      "Approximate location only.<br>" +
+      "Status is not medically verified."
+    );
+    marker.addTo(dcPresenceLayer);
+
+    L.circle([lat, lng], {
+      radius: DC_RADIUS_KM * 1000,
+      color: "#dc2626",
+      weight: 1.5,
+      opacity: 0.65,
+      fillColor: "#ef4444",
+      fillOpacity: 0.08,
+      interactive: false
+    }).addTo(dcPresenceLayer);
+  });
+}
+
+function dcCheckPositiveUsers(records) {
+  if (dcProfileStatus !== "negative" || !dcSharingEnabled || !dcLatestPosition) {
+    dcNearbyPositiveIds.clear();
+    return;
+  }
+
+  const currentIds = new Set();
+  let closestDistance = Infinity;
+
+  records.forEach(record => {
+    if (!record.id || record.id === dcCurrentUser?.uid) return;
+    const lat = Number(record.latitude);
+    const lng = Number(record.longitude);
+    if (!dcValidCoordinates(lat, lng)) return;
+
+    const distance = calculateDistanceKm(
+      dcLatestPosition.latitude,
+      dcLatestPosition.longitude,
+      lat,
+      lng
+    );
+
+    if (distance <= DC_RADIUS_KM) {
+      currentIds.add(record.id);
+      closestDistance = Math.min(closestDistance, distance);
+    }
+  });
+
+  const newlyNearby = [...currentIds].some(id => !dcNearbyPositiveIds.has(id));
+  if (newlyNearby && Number.isFinite(closestDistance)) {
+    dcShowUserNearbyAlert(closestDistance);
+  }
+  dcNearbyPositiveIds = currentIds;
+}
+
+function dcStartPresenceListener() {
+  if (!dcDb || !dcCurrentUser) return;
+  if (dcPresenceUnsubscribe) dcPresenceUnsubscribe();
+
+  // Query includes sharingEnabled=true to match the Firestore read rule.
+  dcPresenceUnsubscribe = dcDb.collection("presence")
+    .where("sharingEnabled", "==", true)
+    .onSnapshot(snapshot => {
+      const now = Date.now();
+      const records = [];
+
+      snapshot.forEach(doc => {
+        const data = doc.data() || {};
+        const expiry = data.expiresAt && typeof data.expiresAt.toMillis === "function"
+          ? data.expiresAt.toMillis()
+          : 0;
+
+        if (
+          data.dengueStatus === "positive" &&
+          expiry > now &&
+          dcValidCoordinates(Number(data.latitude), Number(data.longitude))
+        ) {
+          records.push({
+            id: doc.id,
+            latitude: Number(data.latitude),
+            longitude: Number(data.longitude),
+            expiresAt: expiry
+          });
+        }
+      });
+
+      dcCachedPresenceRecords = records;
+      dcRenderPositiveMarkers(records);
+      dcCheckPositiveUsers(records);
+    }, error => {
+      console.error("Presence listener error:", error);
+      dcSetProfileMessage("Could not load nearby users. Check Firestore rules and internet connection.", true);
+    });
+}
+
+async function dcWritePresence(latitude, longitude) {
+  if (!dcDb || !dcCurrentUser) throw new Error("Firebase sign-in is not ready.");
+
+  const docRef = dcDb.collection("presence").doc(dcCurrentUser.uid);
+  const payload = {
+    dengueStatus: dcProfileStatus,
+    sharingEnabled: dcSharingEnabled,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    expiresAt: firebase.firestore.Timestamp.fromMillis(Date.now() + DC_PRESENCE_TTL_MS)
+  };
+
+  if (dcSharingEnabled && dcValidCoordinates(latitude, longitude)) {
+    payload.latitude = dcRoundCoordinate(latitude);
+    payload.longitude = dcRoundCoordinate(longitude);
+  } else {
+    payload.latitude = firebase.firestore.FieldValue.delete();
+    payload.longitude = firebase.firestore.FieldValue.delete();
+  }
+
+  await docRef.set(payload, { merge: true });
+}
+
+function dcStopLocationSharing() {
+  if (dcLocationWatchId !== null && navigator.geolocation) {
+    navigator.geolocation.clearWatch(dcLocationWatchId);
+  }
+  dcLocationWatchId = null;
+  dcLatestPosition = null;
+  dcLastLocationWrite = 0;
+  dcNearbyPositiveIds.clear();
+}
+
+function dcStartLocationSharing() {
+  if (!navigator.geolocation) {
+    dcSetProfileMessage("This browser does not support location services.", true);
+    return;
+  }
+  if (dcLocationWatchId !== null) return;
+
+  dcSetProfileMessage("Requesting location permission…");
+  dcLocationWatchId = navigator.geolocation.watchPosition(async position => {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    dcLatestPosition = { latitude, longitude };
+
+    const now = Date.now();
+    if (now - dcLastLocationWrite < DC_LOCATION_UPDATE_MS) {
+      return;
+    }
+
+    dcLastLocationWrite = now;
+    try {
+      await dcWritePresence(latitude, longitude);
+      dcSetProfileMessage("Approximate location is being shared. It automatically expires if updates stop.");
+    } catch (error) {
+      console.error("Unable to update presence:", error);
+      dcSetProfileMessage("Could not save your location. Check Firestore security rules.", true);
+    }
+  }, error => {
+    console.error("Location permission error:", error);
+    dcStopLocationSharing();
+    dcSharingEnabled = false;
+    document.getElementById("dcShareLocation").checked = false;
+    dcWritePresence(null, null).catch(writeError => console.warn("Could not revoke stale presence:", writeError));
+    dcSetProfileMessage("Location was not shared. Allow browser location access and save again if you want to opt in.", true);
+  }, {
+    enableHighAccuracy: false,
+    maximumAge: 30000,
+    timeout: 20000
+  });
+}
+
+async function dcSaveProfile() {
+  const saveButton = document.getElementById("dcSaveProfile");
+  const displayName = document.getElementById("dcDisplayName").value.trim();
+  const selectedStatus = document.getElementById("dcDengueStatus").value;
+  const wantsSharing = document.getElementById("dcShareLocation").checked;
+
+  if (!["positive", "negative", "unknown"].includes(selectedStatus)) {
+    dcSetProfileMessage("Choose a valid status.", true);
+    return;
+  }
+
+  saveButton.disabled = true;
+  saveButton.textContent = "Saving…";
+
+  try {
+    const ready = await dcFirebaseReady;
+    if (!ready || !dcCurrentUser || !dcDb) {
+      throw new Error("Firebase connection is not ready. Check your Firebase project settings.");
+    }
+
+    localStorage.setItem("denguecast_display_name", displayName);
+    dcProfileStatus = selectedStatus;
+    dcSharingEnabled = wantsSharing;
+
+    if (wantsSharing) {
+      // Publish only after a valid location exists. If already sharing, update
+      // the status immediately so a previous Positive value is not left stale.
+      if (dcLatestPosition) {
+        await dcWritePresence(dcLatestPosition.latitude, dcLatestPosition.longitude);
+      }
+      dcStartLocationSharing();
+      dcSetProfileMessage("Location sharing enabled. Your browser will ask for location permission if it has not already.");
+    } else {
+      dcStopLocationSharing();
+      await dcWritePresence(null, null);
+      dcSetProfileMessage("Profile saved. Location sharing is off.");
+    }
+
+    dcCloseProfile();
+    dcAddNotification("Profile updated", `Your status is set to ${dcProfileStatus}.`);
+  } catch (error) {
+    console.error("Profile save error:", error);
+    dcSetProfileMessage(error.message || "Unable to save profile.", true);
+  } finally {
+    saveButton.disabled = false;
+    saveButton.textContent = "Save Profile";
+  }
+}
+
+async function dcRestoreProfile() {
+  const ready = await dcFirebaseReady;
+  if (!ready || !dcDb || !dcCurrentUser) {
+    console.warn("DengueCast is running without Firebase presence features.");
+    return;
+  }
+
+  try {
+    const ownDoc = await dcDb.collection("presence").doc(dcCurrentUser.uid).get();
+    if (ownDoc.exists) {
+      const data = ownDoc.data() || {};
+      if (["positive", "negative", "unknown"].includes(data.dengueStatus)) {
+        dcProfileStatus = data.dengueStatus;
+      }
+      dcSharingEnabled = data.sharingEnabled === true;
+      if (dcSharingEnabled) dcStartLocationSharing();
+    }
+    dcStartPresenceListener();
+  } catch (error) {
+    console.error("Could not restore DengueCast profile:", error);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const profileModal = document.getElementById("dcProfileModal");
+  profileModal.addEventListener("click", event => {
+    if (event.target === profileModal) dcCloseProfile();
+  });
+
+  const notificationPanel = document.getElementById("dcNotificationPanel");
+  document.addEventListener("click", event => {
+    const bell = event.target.closest(".header-icon-btn");
+    const navAlerts = event.target.closest("#dcNavAlerts");
+    if (!notificationPanel.contains(event.target) && !bell && !navAlerts) {
+      dcCloseNotifications();
+    }
+  });
+
+  dcRestoreProfile();
+
+  // Remove expired markers even if Firestore has no new snapshot event.
+  setInterval(() => {
+    const now = Date.now();
+    dcCachedPresenceRecords = dcCachedPresenceRecords.filter(record => record.expiresAt > now);
+    dcRenderPositiveMarkers(dcCachedPresenceRecords);
+    dcCheckPositiveUsers(dcCachedPresenceRecords);
+  }, 60000);
+});
+</script>
+
+</body>
+</html>
