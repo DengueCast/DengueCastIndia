@@ -1,4 +1,4 @@
-const CACHE_NAME = "mosquito-pwa-v1";
+const CACHE_NAME = "DengueCast";
 
 const FILES_TO_CACHE = [
     "./",
