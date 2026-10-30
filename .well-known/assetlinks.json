@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.denguecast.twa",
+        "sha256_cert_fingerprints": ["D1:60:44:F1:48:7E:02:3F:F0:25:10:A1:E0:E1:D9:76:C1:A4:CB:C2:55:86:77:D0:43:8E:E7:BC:30:F4:B2:1A"]
+      }
+    }]
